@@ -1,0 +1,48 @@
+plugins {
+    id "com.android.application"
+    id "kotlin-android"
+    id "dev.flutter.flutter-gradle-plugin"
+    id "com.google.gms.google-services" // 🔥 Añade este plugin (DEBE estar al final)
+}
+
+android {
+    namespace = "cl.wisetrack.mobileAndroid"
+    compileSdk = flutter.compileSdkVersion
+    ndkVersion = flutter.ndkVersion
+
+    compileOptions {
+        sourceCompatibility = JavaVersion.VERSION_1_8
+        targetCompatibility = JavaVersion.VERSION_1_8
+    }
+
+    kotlinOptions {
+        jvmTarget = JavaVersion.VERSION_1_8
+    }
+
+    defaultConfig {
+        applicationId = "cl.wisetrack.mobileAndroid"
+        minSdk = flutter.minSdkVersion
+        targetSdk = flutter.targetSdkVersion
+        versionCode = flutter.versionCode
+        versionName = flutter.versionName
+        multiDexEnabled = true // 🔥 Necesario para Firebase
+    }
+
+    buildTypes {
+        release {
+            signingConfig = signingConfigs.debug
+            // 🔥 Optimización para release (opcional)
+            minifyEnabled true
+            proguardFiles getDefaultProguardFile('proguard-android.txt'), 'proguard-rules.pro'
+        }
+    }
+}
+
+flutter {
+    source = "../.."
+}
+
+dependencies {
+    implementation platform('com.google.firebase:firebase-bom:32.7.0') // 🔥 Versión BOM
+    implementation 'com.google.firebase:firebase-analytics' // 🔥 Opcional pero recomendado
+}

@@ -1,0 +1,92 @@
+name: wisetrack_app
+description: "A new Flutter project."
+publish_to: 'none'
+
+version: 1.0.0+1
+
+environment:
+  # Se actualizó a una versión más estable y común de Dart SDK
+  sdk: '>=3.2.0 <4.0.0' 
+
+dependencies:
+  flutter:
+    sdk: flutter
+  
+  # Iconos de estilo iOS
+  cupertino_icons: ^1.0.8
+
+  # Widgets y Utilidades
+  pinput: ^4.0.0
+  google_maps_flutter: ^2.10.1
+  dropdown_button2: ^2.3.9
+  intl: ^0.19.0 # Se actualizó a la versión más reciente
+  table_calendar: ^3.1.1 # Se actualizó a la versión más reciente
+  fl_chart: ^0.68.0
+  geolocator: ^12.0.0
+  permission_handler: ^11.3.1
+  shared_preferences: ^2.2.3 # Se actualizó a la versión más reciente
+  http: ^0.13.5
+  screenshot: ^3.0.0
+  pdf: ^3.10.8
+  path_provider: ^2.1.5
+  device_info_plus: ^10.1.2
+  url_launcher: ^6.1.11  # Para launchUrl
+  share_plus: ^7.0.0     # Para Share en iOS
+  open_file_plus: ^3.4.1+1
+  image: ^4.5.4
+  geocoding: ^3.0.0 # O la versión más reciente
+  printing: ^5.6.0
+  location: ^8.0.0  #
+  firebase_core: ^2.15.0
+  firebase_auth: ^4.8.0
+  firebase_messaging: ^14.7.10
+  package_info_plus: ^8.0.0 # Para obtener la versión de la app
+  uuid: ^4.4.0                 # Para generar el ID único
+  flutter_dotenv: ^5.1.0 # 
+  image_picker: ^1.0.7  
+  flutter_image_compress: ^2.4.0
+
+dev_dependencies:
+  flutter_test:
+    sdk: flutter
+  flutter_lints: ^4.0.0 # Se actualizó a la versión más reciente
+  
+  # --- INICIO DE LA CORRECCIÓN ---
+  # El paquete del splash screen va en dev_dependencies
+  flutter_native_splash: ^2.4.0 # Se actualizó a la versión más reciente
+  # --- FIN DE LA CORRECCIÓN ---
+
+
+flutter:
+  uses-material-design: true
+
+  assets:
+    - assets/images/
+    - assets/images/icons/
+    - assets/fonts/
+    - .env # <-- AÑADE ESTA LÍNEA
+    # Es buena práctica ser explícito con las imágenes para evitar errores
+    # - assets/images/logo_w.png
+    # - assets/images/splash_background.png
+    # - assets.images/backbtn.png
+    
+# --- INICIO DE LA CORRECCIÓN ---
+# Añade esta sección completa al final de tu archivo.
+# Asegúrate de que no esté dentro de la sección 'flutter:'.
+flutter_native_splash:
+  # El color de fondo es un respaldo, pero la imagen lo cubrirá todo.
+  color: "#008C95"
+  
+  # Usamos 'background_image' para la imagen de pantalla completa.
+  background_image: assets/images/inicio.png
+
+  # Para Android 12 y superior, el sistema fuerza un ícono central.
+  # No soporta imágenes de fondo, así que aquí mantenemos el logo central.
+  android_12:
+    color: "#008C95"
+    image: assets/images/logoApp.png # Tu logo para el centro
+
+  # Cómo se ajusta la imagen en plataformas que lo soportan.
+  android_gravity: fill
+  ios_content_mode: scaleAspectFill
+# --- FIN DE LA CORRECCIÓN ---

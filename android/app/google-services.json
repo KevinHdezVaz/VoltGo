@@ -1,0 +1,48 @@
+{
+  "project_info": {
+    "project_number": "773707402802",
+    "project_id": "wi-flit",
+    "storage_bucket": "wi-flit.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:773707402802:android:ff27100236b52d9f59762b",
+        "android_client_info": {
+          "package_name": "cl.wisetrack.mobileAndroid"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyAqL4xwW8mB3pxuhnx7lq8ZwCAhapcE1vA"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    },
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:773707402802:android:47ef2ac4cae3f54c59762b",
+        "android_client_info": {
+          "package_name": "com.example.wisetrack_app"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyAqL4xwW8mB3pxuhnx7lq8ZwCAhapcE1vA"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
