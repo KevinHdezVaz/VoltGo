@@ -1,4 +1,4 @@
-package cl.wisetrack.mobileAndroid
+package us.voltgo.app
 
 import io.flutter.embedding.android.FlutterActivity
 

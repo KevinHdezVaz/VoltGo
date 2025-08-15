@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
-import 'package:wisetrack_app/utils/Preferences.dart';
-import 'package:wisetrack_app/data/services/auth_api_service.dart';
-import 'package:wisetrack_app/utils/AnimatedTruckProgress.dart';
+import 'package:Voltgo_app/utils/Preferences.dart';
+import 'package:Voltgo_app/data/services/auth_api_service.dart';
+import 'package:Voltgo_app/utils/AnimatedTruckProgress.dart';
 
 class AuthWrapper extends StatefulWidget {
   const AuthWrapper({super.key});
@@ -10,7 +10,8 @@ class AuthWrapper extends StatefulWidget {
   State<AuthWrapper> createState() => _AuthWrapperState();
 }
 
-class _AuthWrapperState extends State<AuthWrapper> with SingleTickerProviderStateMixin {
+class _AuthWrapperState extends State<AuthWrapper>
+    with SingleTickerProviderStateMixin {
   late AnimationController _animationController;
 
   @override
@@ -18,7 +19,7 @@ class _AuthWrapperState extends State<AuthWrapper> with SingleTickerProviderStat
     super.initState();
     _animationController = AnimationController(
       vsync: this,
-      duration: const Duration(seconds: 3), 
+      duration: const Duration(seconds: 3),
     );
     _checkSessionAndRedirect();
   }

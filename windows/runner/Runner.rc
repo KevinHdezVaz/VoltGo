@@ -90,12 +90,12 @@ BEGIN
         BLOCK "040904e4"
         BEGIN
             VALUE "CompanyName", "com.example" "\0"
-            VALUE "FileDescription", "wisetrack_app" "\0"
+            VALUE "FileDescription", "Voltgo_app" "\0"
             VALUE "FileVersion", VERSION_AS_STRING "\0"
-            VALUE "InternalName", "wisetrack_app" "\0"
+            VALUE "InternalName", "Voltgo_app" "\0"
             VALUE "LegalCopyright", "Copyright (C) 2025 com.example. All rights reserved." "\0"
-            VALUE "OriginalFilename", "wisetrack_app.exe" "\0"
-            VALUE "ProductName", "wisetrack_app" "\0"
+            VALUE "OriginalFilename", "Voltgo_app.exe" "\0"
+            VALUE "ProductName", "Voltgo_app" "\0"
             VALUE "ProductVersion", VERSION_AS_STRING "\0"
         END
     END

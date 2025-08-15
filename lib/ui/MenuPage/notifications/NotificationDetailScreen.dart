@@ -2,10 +2,10 @@ import 'package:flutter/material.dart';
 import 'package:google_maps_flutter/google_maps_flutter.dart';
 import 'package:intl/intl.dart';
 import 'package:share_plus/share_plus.dart';
-import 'package:wisetrack_app/data/models/NotificationItem.dart' as model;
-import 'package:wisetrack_app/data/services/NotificationsService.dart';
-import 'package:wisetrack_app/ui/color/app_colors.dart';
-import 'package:wisetrack_app/utils/AnimatedTruckProgress.dart';
+import 'package:Voltgo_app/data/models/NotificationItem.dart' as model;
+import 'package:Voltgo_app/data/services/NotificationsService.dart';
+import 'package:Voltgo_app/ui/color/app_colors.dart';
+import 'package:Voltgo_app/utils/AnimatedTruckProgress.dart';
 
 class NotificationDetailScreen extends StatefulWidget {
   final int notificationId;
@@ -51,7 +51,8 @@ class _NotificationDetailScreenState extends State<NotificationDetailScreen>
           _notificationDetail = detail;
           _isLoading = false;
         });
-        _animationController.stop(); // Detiene la animación al completar la carga
+        _animationController
+            .stop(); // Detiene la animación al completar la carga
       }
     } catch (e) {
       if (mounted) {
@@ -94,11 +95,13 @@ class _NotificationDetailScreenState extends State<NotificationDetailScreen>
           child: Padding(
         padding: const EdgeInsets.all(16.0),
         child: Text(_errorMessage!,
-            textAlign: TextAlign.center, style: const TextStyle(color: Colors.red)),
+            textAlign: TextAlign.center,
+            style: const TextStyle(color: Colors.red)),
       ));
     }
     if (_notificationDetail == null) {
-      return const Center(child: Text('No se encontraron detalles para la notificación.'));
+      return const Center(
+          child: Text('No se encontraron detalles para la notificación.'));
     }
 
     final detail = _notificationDetail!;
@@ -109,8 +112,7 @@ class _NotificationDetailScreenState extends State<NotificationDetailScreen>
           children: [
             _buildNotificationHeader(detail),
             const SizedBox(height: 24),
-            if
-            (detail.alert.latitude != null && detail.alert.longitude != null)
+            if (detail.alert.latitude != null && detail.alert.longitude != null)
               _buildMapView(detail)
             else
               _buildNoLocationView(),
@@ -136,7 +138,7 @@ class _NotificationDetailScreenState extends State<NotificationDetailScreen>
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         Row(
-          mainAxisAlignment:   MainAxisAlignment.start,
+          mainAxisAlignment: MainAxisAlignment.start,
           children: [
             Expanded(
               child: Text(
@@ -155,7 +157,8 @@ class _NotificationDetailScreenState extends State<NotificationDetailScreen>
         const SizedBox(height: 8),
         Text(
           detail.messageBody,
-          style: TextStyle(fontSize: 16, color: Colors.grey.shade800, height: 1.4),
+          style:
+              TextStyle(fontSize: 16, color: Colors.grey.shade800, height: 1.4),
         ),
       ],
     );
@@ -176,7 +179,8 @@ class _NotificationDetailScreenState extends State<NotificationDetailScreen>
             Marker(
               markerId: MarkerId(detail.id.toString()),
               position: location,
-              icon: BitmapDescriptor.defaultMarkerWithHue(BitmapDescriptor.hueRed),
+              icon: BitmapDescriptor.defaultMarkerWithHue(
+                  BitmapDescriptor.hueRed),
             ),
           },
           zoomControlsEnabled: false,
@@ -265,16 +269,19 @@ class _NotificationDetailScreenState extends State<NotificationDetailScreen>
           onPressed: () {
             if (_notificationDetail != null) {
               final detail = _notificationDetail!;
-              final dateString = DateFormat('dd/MM/yyyy HH:mm a').format(detail.date);
-              String shareText = "🔔 *Alerta WiseTrack*\n\n"
+              final dateString =
+                  DateFormat('dd/MM/yyyy HH:mm a').format(detail.date);
+              String shareText = "🔔 *Alerta Voltgo*\n\n"
                   "*${detail.messageTitle}*\n"
                   "${detail.messageBody}\n\n"
                   "👤 *Conductor:* ${detail.alert.driver}\n"
                   "📅 *Fecha:* $dateString";
-              if (detail.alert.latitude != null && detail.alert.longitude != null) {
+              if (detail.alert.latitude != null &&
+                  detail.alert.longitude != null) {
                 final lat = detail.alert.latitude;
                 final lon = detail.alert.longitude;
-                final googleMapsUrl = "https://www.google.com/maps/search/?api=1&query=$lat,$lon";
+                final googleMapsUrl =
+                    "https://www.google.com/maps/search/?api=1&query=$lat,$lon";
                 shareText += "\n\n📍 *Ubicación:*\n$googleMapsUrl";
               }
               Share.share(shareText);

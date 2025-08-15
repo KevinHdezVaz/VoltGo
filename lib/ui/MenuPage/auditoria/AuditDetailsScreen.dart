@@ -10,14 +10,14 @@ import 'package:geolocator/geolocator.dart';
 import 'package:open_file_plus/open_file_plus.dart';
 import 'package:path_provider/path_provider.dart';
 import 'package:pdf/pdf.dart';
-import 'package:wisetrack_app/data/models/User/UserDetail.dart';
+import 'package:Voltgo_app/data/models/User/UserDetail.dart';
 import 'dart:io';
-import 'package:wisetrack_app/data/models/vehicles/VehicleHistoryPoint.dart';
-import 'package:wisetrack_app/data/services/UserCacheService.dart';
-import 'package:wisetrack_app/data/services/vehicles_service.dart';
-import 'package:wisetrack_app/ui/MenuPage/auditoria/CustomDatePickerDialog.dart';
-import 'package:wisetrack_app/ui/color/app_colors.dart';
-import 'package:wisetrack_app/utils/AnimatedTruckProgress.dart';
+import 'package:Voltgo_app/data/models/vehicles/VehicleHistoryPoint.dart';
+import 'package:Voltgo_app/data/services/UserCacheService.dart';
+import 'package:Voltgo_app/data/services/vehicles_service.dart';
+import 'package:Voltgo_app/ui/MenuPage/auditoria/CustomDatePickerDialog.dart';
+import 'package:Voltgo_app/ui/color/app_colors.dart';
+import 'package:Voltgo_app/utils/AnimatedTruckProgress.dart';
 import 'package:pdf/widgets.dart' as pw;
 
 class AuditDetailsScreen extends StatefulWidget {

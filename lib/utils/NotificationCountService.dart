@@ -1,12 +1,11 @@
 import 'package:flutter/foundation.dart';
-import 'package:wisetrack_app/data/models/NotificationItem.dart';
- import 'package:wisetrack_app/data/models/alert/NotificationPermissions.dart';
- import 'package:wisetrack_app/data/services/NotificationsService.dart'; // Servicio de permisos
-import 'package:wisetrack_app/utils/ReadStatusManager.dart';
+import 'package:Voltgo_app/data/models/NotificationItem.dart';
+import 'package:Voltgo_app/data/models/alert/NotificationPermissions.dart';
+import 'package:Voltgo_app/data/services/NotificationsService.dart'; // Servicio de permisos
+import 'package:Voltgo_app/utils/ReadStatusManager.dart';
 
 /// Gestiona el estado del contador de notificaciones no leídas.
 class NotificationCountService {
-  
   static final ValueNotifier<int> unreadCountNotifier = ValueNotifier<int>(0);
 
   /// Actualiza el contador obteniendo todos los datos y aplicando los permisos del usuario.
@@ -16,7 +15,8 @@ class NotificationCountService {
       final results = await Future.wait([
         NotificationService.getNotifications(),
         ReadStatusManager.getReadNotificationIds(),
-        NotificationService.getNotificationPermissions(), // <-- AÑADIDO: Obtiene los permisos
+        NotificationService
+            .getNotificationPermissions(), // <-- AÑADIDO: Obtiene los permisos
       ]);
 
       final notificationData = results[0] as NotificationData;
@@ -33,12 +33,13 @@ class NotificationCountService {
         unreadCountNotifier.value = 0;
         return;
       }
-      
+
       // 3. Calcula el contador aplicando los filtros de permisos.
       int unreadCount = 0;
       for (var notification in allNotifications) {
         final bool isUnread = !readIds.contains(notification.id);
-        final bool isAllowedByType = _isNotificationTypeAllowed(notification, permissions);
+        final bool isAllowedByType =
+            _isNotificationTypeAllowed(notification, permissions);
 
         // Solo cuenta si no está leída Y si su tipo está permitido por el usuario.
         if (isUnread && isAllowedByType) {
@@ -48,14 +49,14 @@ class NotificationCountService {
 
       // 4. Actualiza el valor del notificador.
       unreadCountNotifier.value = unreadCount;
-
     } catch (e) {
       debugPrint("Error al actualizar el contador de notificaciones: $e");
     }
   }
 
   /// Función auxiliar para verificar si un tipo de notificación está activado.
-  static bool _isNotificationTypeAllowed( Notification notification, NotificationPermissions permissions) {
+  static bool _isNotificationTypeAllowed(
+      Notification notification, NotificationPermissions permissions) {
     final alertPermissions = permissions.alertPermissions;
     switch (notification.type) {
       case 'Velocidad Maxima':

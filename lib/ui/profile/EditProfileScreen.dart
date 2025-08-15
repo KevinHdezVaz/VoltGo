@@ -3,13 +3,13 @@ import 'package:flutter/material.dart';
 import 'package:flutter_image_compress/flutter_image_compress.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:permission_handler/permission_handler.dart';
-import 'package:wisetrack_app/data/models/User/UserDetail.dart';
-import 'package:wisetrack_app/data/services/UserCacheService.dart';
-import 'package:wisetrack_app/data/services/UserService.dart';
-import 'package:wisetrack_app/ui/color/app_colors.dart';
+import 'package:Voltgo_app/data/models/User/UserDetail.dart';
+import 'package:Voltgo_app/data/services/UserCacheService.dart';
+import 'package:Voltgo_app/data/services/UserService.dart';
+import 'package:Voltgo_app/ui/color/app_colors.dart';
 import 'package:path_provider/path_provider.dart';
 import 'package:path/path.dart' as p;
-import 'package:wisetrack_app/utils/AnimatedTruckProgress.dart';
+import 'package:Voltgo_app/utils/AnimatedTruckProgress.dart';
 
 class EditProfileScreen extends StatefulWidget {
   const EditProfileScreen({Key? key}) : super(key: key);
@@ -126,44 +126,47 @@ class _EditProfileScreenState extends State<EditProfileScreen>
 
   // En EditProfileScreen
 
-Future<void> _pickImage(ImageSource source) async {
-  // --- 1. VERIFICAR PERMISOS PRIMERO ---
-  final hasPermission = await _checkPermissions(source);
-  if (!hasPermission) {
-    if (mounted) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Permiso denegado. Habilítalo en la configuración de tu teléfono.')),
-      );
+  Future<void> _pickImage(ImageSource source) async {
+    // --- 1. VERIFICAR PERMISOS PRIMERO ---
+    final hasPermission = await _checkPermissions(source);
+    if (!hasPermission) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+              content: Text(
+                  'Permiso denegado. Habilítalo en la configuración de tu teléfono.')),
+        );
+      }
+      return; // Detiene la ejecución si no hay permiso
     }
-    return; // Detiene la ejecución si no hay permiso
+
+    // --- 2. EL RESTO DE TU CÓDIGO ---
+    final ImagePicker picker = ImagePicker();
+    final XFile? pickedFile = await picker.pickImage(source: source);
+
+    if (pickedFile == null) return;
+
+    final originalFile = File(pickedFile.path);
+    final tempDir = await getTemporaryDirectory();
+    final targetPath = p.join(tempDir.path, "temp_profile.jpg");
+
+    final XFile? compressedFile = await FlutterImageCompress.compressAndGetFile(
+      originalFile.absolute.path,
+      targetPath,
+      quality: 60,
+    );
+
+    if (compressedFile != null && mounted) {
+      setState(() {
+        _selectedImage = File(compressedFile.path);
+      });
+      print(
+          'Tamaño original: ${(originalFile.lengthSync() / 1024 / 1024).toStringAsFixed(2)} MB');
+      print(
+          'Tamaño comprimido: ${(_selectedImage!.lengthSync() / 1024).toStringAsFixed(2)} KB');
+    }
   }
 
-  // --- 2. EL RESTO DE TU CÓDIGO ---
-  final ImagePicker picker = ImagePicker();
-  final XFile? pickedFile = await picker.pickImage(source: source);
-
-  if (pickedFile == null) return;
-  
-  final originalFile = File(pickedFile.path);
-  final tempDir = await getTemporaryDirectory();
-  final targetPath = p.join(tempDir.path, "temp_profile.jpg");
-  
-  final XFile? compressedFile = await FlutterImageCompress.compressAndGetFile(
-    originalFile.absolute.path,
-    targetPath,
-    quality: 60,
-  );
-
-  if (compressedFile != null && mounted) {
-    setState(() {
-      _selectedImage = File(compressedFile.path);
-    });
-    print(
-        'Tamaño original: ${(originalFile.lengthSync() / 1024 / 1024).toStringAsFixed(2)} MB');
-    print(
-        'Tamaño comprimido: ${(_selectedImage!.lengthSync() / 1024).toStringAsFixed(2)} KB');
-  }
-}
   Future<bool> _checkPermissions(ImageSource source) async {
     if (Platform.isIOS) {
       final status = await Permission.photos.status;
@@ -209,11 +212,11 @@ Future<void> _pickImage(ImageSource source) async {
         phone: _userDetail!.data.phone,
       );
 
-
-       await UserCacheService.clearUserData(); // Borra la caché actual
-    final updatedUser = await UserService.getUserDetail(); // Obtiene los datos frescos
-    await UserCacheService.saveUserData(updatedUser.data); // Guarda los nuevos datos
-
+      await UserCacheService.clearUserData(); // Borra la caché actual
+      final updatedUser =
+          await UserService.getUserDetail(); // Obtiene los datos frescos
+      await UserCacheService.saveUserData(
+          updatedUser.data); // Guarda los nuevos datos
 
       if (mounted) {
         Navigator.of(context).pop(); // Close dialog
@@ -221,7 +224,6 @@ Future<void> _pickImage(ImageSource source) async {
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(content: Text('Perfil actualizado correctamente')),
         );
-       
       }
     } catch (e) {
       if (mounted) {
@@ -384,10 +386,9 @@ Future<void> _pickImage(ImageSource source) async {
         color: Colors.white,
         width: double.infinity,
         child: ElevatedButton(
-          onPressed:
-              (_selectedImage != null && !_isLoading && !_isSaving)
-                  ? _saveChanges
-                  : null,
+          onPressed: (_selectedImage != null && !_isLoading && !_isSaving)
+              ? _saveChanges
+              : null,
           style: ElevatedButton.styleFrom(
             backgroundColor: AppColors.primary,
             disabledBackgroundColor: Colors.grey.shade300,

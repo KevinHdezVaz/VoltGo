@@ -1,11 +1,11 @@
 import 'package:flutter/material.dart';
 import 'package:intl/date_symbol_data_local.dart';
 import 'package:intl/intl.dart';
-import 'package:wisetrack_app/data/models/dashboard/BalanceResponse.dart';
-import 'package:wisetrack_app/data/models/dashboard/DashboardData.dart';
-import 'package:wisetrack_app/data/services/DashboardService.dart';
-import 'package:wisetrack_app/ui/MenuPage/dashboard/BalanceScreen.dart';
-import 'package:wisetrack_app/ui/MenuPage/dashboard/DataVisualizationScreen.dart';
+import 'package:Voltgo_app/data/models/dashboard/BalanceResponse.dart';
+import 'package:Voltgo_app/data/models/dashboard/DashboardData.dart';
+import 'package:Voltgo_app/data/services/DashboardService.dart';
+import 'package:Voltgo_app/ui/MenuPage/dashboard/BalanceScreen.dart';
+import 'package:Voltgo_app/ui/MenuPage/dashboard/DataVisualizationScreen.dart';
 
 class CombinedDashboardScreen extends StatefulWidget {
   const CombinedDashboardScreen({Key? key}) : super(key: key);
@@ -18,7 +18,7 @@ class CombinedDashboardScreen extends StatefulWidget {
 class _CombinedDashboardScreenState extends State<CombinedDashboardScreen> {
   int _selectedTabIndex = 0;
   bool _isLoading = false; // <-- AÑADE ESTA LÍNEA
- BalanceResponse? _balanceData;
+  BalanceResponse? _balanceData;
   DashboardData? _dashboardData;
   final List<String> _titles = ['Balance de Hoy', 'Dashboard'];
   final List<Widget> _tabContents = [
@@ -28,18 +28,18 @@ class _CombinedDashboardScreenState extends State<CombinedDashboardScreen> {
 
   @override
   Widget build(BuildContext context) {
-     initializeDateFormatting('es_MX', null); 
+    initializeDateFormatting('es_MX', null);
 
-  // Obtiene la fecha y hora actual.
-  final DateTime now = DateTime.now();
+    // Obtiene la fecha y hora actual.
+    final DateTime now = DateTime.now();
 
-  // Crea el formato deseado: Día abreviado, número de día, Mes abreviado.
-  // 'es_MX' asegura que sea en español (ej: "mar." en lugar de "Tue").
-  final String formattedDate = DateFormat('EEE d MMM.', 'es_MX').format(now);
+    // Crea el formato deseado: Día abreviado, número de día, Mes abreviado.
+    // 'es_MX' asegura que sea en español (ej: "mar." en lugar de "Tue").
+    final String formattedDate = DateFormat('EEE d MMM.', 'es_MX').format(now);
 
-  // Capitaliza la primera letra del resultado (ej: "lun" -> "Lun")
-  final String displayDate = formattedDate.substring(0, 1).toUpperCase() + formattedDate.substring(1);
-
+    // Capitaliza la primera letra del resultado (ej: "lun" -> "Lun")
+    final String displayDate = formattedDate.substring(0, 1).toUpperCase() +
+        formattedDate.substring(1);
 
     return Scaffold(
       backgroundColor: Colors.grey[100],
@@ -58,32 +58,31 @@ class _CombinedDashboardScreenState extends State<CombinedDashboardScreen> {
                 style: TextStyle(color: Colors.grey[600], fontSize: 14)),
           ],
         ),
-      // Dentro de tu método build, localiza la sección 'actions' del AppBar
-actions: [
-  if (_selectedTabIndex == 0) // Muestra el botón solo en "Balance"
-    // Usa una condición para mostrar el loader o el botón
-    _isLoading
-        ? const Padding(
-            padding: EdgeInsets.all(12.0),
-            child: SizedBox(
-              width: 24,
-              height: 24,
-              child: CircularProgressIndicator(
-                strokeWidth: 2.5,
-                color: Colors.grey,
-              ),
-            ),
-          )
-        : IconButton(
-            icon: const Icon(Icons.refresh, color: Colors.grey),
-            // Llama a tu función al presionar
-            onPressed: _refreshData,
+        // Dentro de tu método build, localiza la sección 'actions' del AppBar
+        actions: [
+          if (_selectedTabIndex == 0) // Muestra el botón solo en "Balance"
+            // Usa una condición para mostrar el loader o el botón
+            _isLoading
+                ? const Padding(
+                    padding: EdgeInsets.all(12.0),
+                    child: SizedBox(
+                      width: 24,
+                      height: 24,
+                      child: CircularProgressIndicator(
+                        strokeWidth: 2.5,
+                        color: Colors.grey,
+                      ),
+                    ),
+                  )
+                : IconButton(
+                    icon: const Icon(Icons.refresh, color: Colors.grey),
+                    // Llama a tu función al presionar
+                    onPressed: _refreshData,
+                  ),
+          IconButton(
+            icon: const Icon(Icons.more_horiz, color: Colors.black54),
+            onPressed: () {},
           ),
-  IconButton(
-    icon: const Icon(Icons.more_horiz, color: Colors.black54),
-    onPressed: () {},
-  ),
-
         ],
       ),
       body: Column(
@@ -106,7 +105,6 @@ actions: [
       onPressed: () => Navigator.of(context).pop(),
     );
   }
-
 
   Future<void> _refreshData() async {
     if (_isLoading) return;
@@ -133,13 +131,13 @@ actions: [
           print("Datos de UI actualizados correctamente.");
         });
       }
-
     } catch (e) {
       // Si cualquiera de las dos llamadas falla, el 'catch' lo manejará.
       print("Error durante la actualización: $e");
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Error al refrescar los datos: ${e.toString()}')),
+          SnackBar(
+              content: Text('Error al refrescar los datos: ${e.toString()}')),
         );
       }
     } finally {

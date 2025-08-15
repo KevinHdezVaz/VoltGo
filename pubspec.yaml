@@ -1,4 +1,4 @@
-name: wisetrack_app
+name: Voltgo_app
 description: "A new Flutter project."
 publish_to: 'none'
 
@@ -18,6 +18,8 @@ dependencies:
   # Widgets y Utilidades
   pinput: ^4.0.0
   google_maps_flutter: ^2.10.1
+  google_fonts: ^6.2.1
+
   dropdown_button2: ^2.3.9
   intl: ^0.19.0 # Se actualizó a la versión más reciente
   table_calendar: ^3.1.1 # Se actualizó a la versión más reciente
@@ -25,7 +27,7 @@ dependencies:
   geolocator: ^12.0.0
   permission_handler: ^11.3.1
   shared_preferences: ^2.2.3 # Se actualizó a la versión más reciente
-  http: ^0.13.5
+  http: ^1.1.0
   screenshot: ^3.0.0
   pdf: ^3.10.8
   path_provider: ^2.1.5
@@ -38,13 +40,19 @@ dependencies:
   printing: ^5.6.0
   location: ^8.0.0  #
   firebase_core: ^2.15.0
+  clipboard: ^0.1.3
+  flutter_chat_bubble: ^2.0.2
+
+
   firebase_auth: ^4.8.0
+  lottie: ^3.1.2 # O la versión más reciente
   firebase_messaging: ^14.7.10
   package_info_plus: ^8.0.0 # Para obtener la versión de la app
   uuid: ^4.4.0                 # Para generar el ID único
   flutter_dotenv: ^5.1.0 # 
   image_picker: ^1.0.7  
   flutter_image_compress: ^2.4.0
+  vibration: ^1.8.1
 
 dev_dependencies:
   flutter_test:

@@ -1,3 +1,3 @@
 class Constants {
-  static const String baseUrl = 'https://fleetmobile.wisetrack.cl';
+  static const String baseUrl = 'https://fleetmobile.Voltgo.cl';
 }

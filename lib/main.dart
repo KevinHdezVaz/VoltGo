@@ -5,23 +5,23 @@ import 'package:firebase_core/firebase_core.dart';
 import 'package:firebase_messaging/firebase_messaging.dart'; // Importante
 import 'package:flutter_dotenv/flutter_dotenv.dart';
 import 'package:intl/date_symbol_data_local.dart';
-import 'package:wisetrack_app/firebase_options.dart';
-import 'package:wisetrack_app/ui/MenuPage/notifications/NotificationDetailScreen.dart';
-import 'package:wisetrack_app/ui/SplashScreen.dart';
-import 'package:wisetrack_app/utils/AuthWrapper.dart';
-import 'package:wisetrack_app/utils/NotificationCountService.dart';
+import 'package:Voltgo_app/firebase_options.dart';
+import 'package:Voltgo_app/ui/MenuPage/notifications/NotificationDetailScreen.dart';
+import 'package:Voltgo_app/ui/SplashScreen.dart';
+import 'package:Voltgo_app/utils/AuthWrapper.dart';
+import 'package:Voltgo_app/utils/NotificationCountService.dart';
 
 // Importa tus pantallas
-import 'package:wisetrack_app/ui/IntroPage/OnboardingWrapper.dart';
-import 'package:wisetrack_app/ui/login/LoginScreen.dart';
-import 'package:wisetrack_app/ui/MenuPage/DashboardScreen.dart';
-import 'package:wisetrack_app/ui/MenuPage/dashboard/CombinedDashboardScreen.dart';
-import 'package:wisetrack_app/ui/MenuPage/moviles/MobilesScreen.dart';
-import 'package:wisetrack_app/ui/MenuPage/auditoria/AuditoriaScreen.dart';
-import 'package:wisetrack_app/ui/MenuPage/notifications/NotificationsScreen.dart';
-import 'package:wisetrack_app/ui/profile/SettingsScreen.dart';
+import 'package:Voltgo_app/ui/IntroPage/OnboardingWrapper.dart';
+import 'package:Voltgo_app/ui/login/LoginScreen.dart';
+import 'package:Voltgo_app/ui/MenuPage/DashboardScreen.dart';
+import 'package:Voltgo_app/ui/MenuPage/dashboard/CombinedDashboardScreen.dart';
+import 'package:Voltgo_app/ui/MenuPage/moviles/MobilesScreen.dart';
+import 'package:Voltgo_app/ui/MenuPage/auditoria/AuditoriaScreen.dart';
+import 'package:Voltgo_app/ui/MenuPage/notifications/NotificationsScreen.dart';
+import 'package:Voltgo_app/ui/profile/SettingsScreen.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 // Importa la pantalla de detalle de notificación
- 
 
 // ✅ PASO 1: CREA LA CLAVE GLOBAL PARA EL NAVEGADOR
 final GlobalKey<NavigatorState> navigatorKey = GlobalKey<NavigatorState>();
@@ -38,14 +38,14 @@ void _handleMessage(RemoteMessage message) {
       // Usa la GlobalKey para navegar a la pantalla de detalle
       navigatorKey.currentState?.pushNamed(
         '/notification_detail',
-        arguments: int.parse(notificationId), // Pasamos el ID convertido a entero
+        arguments:
+            int.parse(notificationId), // Pasamos el ID convertido a entero
       );
     } catch (e) {
       print('Error al parsear el ID de la notificación o al navegar: $e');
     }
   }
 }
-
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -59,6 +59,10 @@ void main() async {
   // 1. Para cuando la app está en segundo plano y se abre desde la notificación
   FirebaseMessaging.onMessageOpenedApp.listen(_handleMessage);
 
+  final prefs = await SharedPreferences.getInstance();
+  final bool onboardingCompleted =
+      prefs.getBool('onboarding_completed') ?? false;
+
   // 2. Para cuando la app está cerrada y se abre desde la notificación
   FirebaseMessaging.instance.getInitialMessage().then((message) {
     if (message != null) {
@@ -68,28 +72,31 @@ void main() async {
 
   // (Opcional) Manejo de notificaciones en primer plano
   FirebaseMessaging.onMessage.listen((RemoteMessage message) {
-    print('Notificación recibida en primer plano: ${message.notification?.title}');
+    print(
+        'Notificación recibida en primer plano: ${message.notification?.title}');
     // Aquí podrías mostrar una notificación local si lo deseas
   });
 
-
   NotificationCountService.updateCount();
 
-  HttpOverrides.global = MyHttpOverrides();
   initializeDateFormatting('es_ES', null).then((_) {
-    runApp(const MyApp());
+    runApp(MyApp(onboardingCompleted: onboardingCompleted));
   });
 }
 
 class MyApp extends StatelessWidget {
-  const MyApp({super.key});
+  final bool onboardingCompleted;
+
+  const MyApp({Key? key, required this.onboardingCompleted}) : super(key: key);
 
   @override
   Widget build(BuildContext context) {
     // ✅ PASO 4: MODIFICA TU MATERIALAPP
     return MaterialApp(
-      title: 'WiseTrack',
+      title: 'Voltgo',
       debugShowCheckedModeBanner: false,
+      initialRoute: onboardingCompleted ? '/login' : '/onboarding',
+
       // Asigna la GlobalKey aquí
       navigatorKey: navigatorKey,
       theme: ThemeData(
@@ -102,6 +109,8 @@ class MyApp extends StatelessWidget {
       // Reemplaza 'routes' con 'onGenerateRoute' para manejar argumentos
       onGenerateRoute: (settings) {
         switch (settings.name) {
+          case '/onboarding':
+            return MaterialPageRoute(builder: (_) => const OnboardingWrapper());
           case '/auth_wrapper':
             return MaterialPageRoute(builder: (_) => const AuthWrapper());
           case '/onboarding':
@@ -109,15 +118,18 @@ class MyApp extends StatelessWidget {
           case '/login':
             return MaterialPageRoute(builder: (_) => const LoginScreen());
           case '/dashboard':
-            return MaterialPageRoute(builder: (_) => const DashboardScreen());
+            return MaterialPageRoute(
+                builder: (_) => const DriverDashboardScreen());
           case '/dashboard_combined':
-            return MaterialPageRoute(builder: (_) => const CombinedDashboardScreen());
+            return MaterialPageRoute(
+                builder: (_) => const CombinedDashboardScreen());
           case '/mobiles':
             return MaterialPageRoute(builder: (_) => MobilesScreen());
           case '/auditoria':
             return MaterialPageRoute(builder: (_) => AuditoriaScreen());
           case '/notifications':
-            return MaterialPageRoute(builder: (_) => const NotificationsScreen());
+            return MaterialPageRoute(
+                builder: (_) => const NotificationsScreen());
           case '/settings':
             return MaterialPageRoute(builder: (_) => const SettingsScreen());
 
@@ -126,7 +138,8 @@ class MyApp extends StatelessWidget {
             // Extrae el argumento (el ID de la notificación)
             final int notificationId = settings.arguments as int;
             return MaterialPageRoute(
-              builder: (_) => NotificationDetailScreen(notificationId: notificationId),
+              builder: (_) =>
+                  NotificationDetailScreen(notificationId: notificationId),
             );
 
           default:
@@ -135,15 +148,5 @@ class MyApp extends StatelessWidget {
         }
       },
     );
-  }
-}
-
-// Clase para anular la verificación de certificados si la necesitas
-class MyHttpOverrides extends HttpOverrides {
-  @override
-  HttpClient createHttpClient(SecurityContext? context) {
-    return super.createHttpClient(context)
-      ..badCertificateCallback =
-          (X509Certificate cert, String host, int port) => true;
   }
 }

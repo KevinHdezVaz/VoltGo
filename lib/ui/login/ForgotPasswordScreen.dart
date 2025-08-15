@@ -1,8 +1,8 @@
 import 'package:flutter/material.dart';
-import 'package:wisetrack_app/data/services/auth_api_service.dart';
-import 'package:wisetrack_app/ui/color/app_colors.dart';
-import 'package:wisetrack_app/ui/login/VerificationCodeScreen.dart';
-import 'package:wisetrack_app/utils/AnimatedTruckProgress.dart';
+import 'package:Voltgo_app/data/services/auth_api_service.dart';
+import 'package:Voltgo_app/ui/color/app_colors.dart';
+import 'package:Voltgo_app/ui/login/VerificationCodeScreen.dart';
+import 'package:Voltgo_app/utils/AnimatedTruckProgress.dart';
 
 class ForgotPasswordScreen extends StatefulWidget {
   const ForgotPasswordScreen({Key? key}) : super(key: key);

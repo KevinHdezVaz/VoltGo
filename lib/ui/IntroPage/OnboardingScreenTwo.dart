@@ -1,28 +1,25 @@
 import 'package:flutter/material.dart';
 import 'dart:math' as math;
-
-import 'package:wisetrack_app/ui/color/app_colors.dart'; // Importado para la rotación
+import 'package:Voltgo_app/ui/color/app_colors.dart';
+import 'package:lottie/lottie.dart';
 
 class OnboardingscreenTwo extends StatelessWidget {
-  final PageController pageController;
-
-  const OnboardingscreenTwo({Key? key, required this.pageController})
-      : super(key: key);
+  const OnboardingscreenTwo({Key? key}) : super(key: key);
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      backgroundColor: Colors.white,
-      body: Stack(
-        children: [
-          _buildBackground(context),
-          _buildContent(context),
-        ],
-      ),
+    return Stack(
+      children: [
+        _buildBackground(context),
+        Center(
+          child: _buildContent(context),
+        ),
+      ],
     );
   }
 
   Widget _buildBackground(BuildContext context) {
+    // Este widget no necesita cambios.
     return Stack(
       children: [
         Positioned(
@@ -51,94 +48,53 @@ class OnboardingscreenTwo extends StatelessWidget {
   }
 
   Widget _buildContent(BuildContext context) {
-    return SafeArea(
-      child: Padding(
-        padding: const EdgeInsets.symmetric(horizontal: 24.0),
-        child: Column(
-          children: [
-            const Spacer(flex: 2),
-            Image.asset(
-              'assets/images/introPage2.png',
-              height: MediaQuery.of(context).size.height * 0.4,
-            ),
-            const Spacer(flex: 1),
-            const Text(
-              'Envío de comandos',
-              style: TextStyle(
-                fontSize: 26,
-                fontWeight: FontWeight.bold,
-                color: Color(0xFF333333),
-              ),
-              textAlign: TextAlign.center,
-            ),
-            const SizedBox(height: 16),
-            const Text(
-              'Gestiona de manera rápida y sencilla.',
-              style: TextStyle(
-                fontSize: 17,
-                color: Colors.black54,
-              ),
-              textAlign: TextAlign.center,
-            ),
-            const Spacer(flex: 3),
-            _buildNavigation(context),
-            const SizedBox(height: 40),
-          ],
-        ),
-      ),
-    );
-  }
-
-  Widget _buildNavigation(BuildContext context) {
-    return Row(
-      mainAxisAlignment: MainAxisAlignment.spaceBetween,
-      crossAxisAlignment: CrossAxisAlignment.center,
-      children: [
-        Row(
-          children: [
-            _buildIndicator(isActive: false, width: 20.0),
-            const SizedBox(width: 8),
-            _buildIndicator(isActive: true, width: 80.0),
-            const SizedBox(width: 8),
-            _buildIndicator(isActive: false, width: 20.0),
-          ],
-        ),
-        ElevatedButton(
-          onPressed: () {
-            pageController.nextPage(
-              duration: const Duration(milliseconds: 400),
-              curve: Curves.easeInOut,
-            );
-          },
-          style: ElevatedButton.styleFrom(
-            backgroundColor: AppColors.primary,
-            padding: const EdgeInsets.symmetric(horizontal: 40, vertical: 16),
-            shape: RoundedRectangleBorder(
-              borderRadius: BorderRadius.circular(20.0),
-            ),
-            elevation: 5,
-          ),
-          child: const Text(
-            'Continuar',
-            style: TextStyle(
-              fontSize: 16,
-              fontWeight: FontWeight.bold,
-              color: Colors.white,
+    // ▼▼▼ CAMBIO PRINCIPAL: Se aplica la misma estructura con Expanded ▼▼▼
+    return Padding(
+      // Añadimos un poco de padding vertical para que no quede pegado a los bordes
+      padding: const EdgeInsets.symmetric(horizontal: 24.0, vertical: 40.0),
+      child: Column(
+        children: [
+          // La animación ahora ocupa el espacio flexible superior
+          Expanded(
+            flex: 2, // Ocupa 2/3 del espacio disponible
+            child: Lottie.asset(
+              'assets/images/animation22.json', // Asegúrate de que la ruta sea correcta
+              // Ya no se necesita 'height', Expanded lo controla
             ),
           ),
-        ),
-      ],
-    );
-  }
 
-  Widget _buildIndicator({required bool isActive, double width = 8.0}) {
-    return Container(
-      width: width,
-      height: 8.0,
-      decoration: BoxDecoration(
-        color: isActive ? AppColors.primary : Colors.grey.shade300,
-        borderRadius: BorderRadius.circular(4.0),
+          // El texto ocupa el espacio flexible inferior
+          const Expanded(
+            flex: 1, // Ocupa 1/3 del espacio disponible
+            child: Column(
+              mainAxisAlignment:
+                  MainAxisAlignment.start, // Alinea el texto hacia arriba
+              children: const [
+                SizedBox(height: 20), // Espacio para separar de la animación
+                Text(
+                  'Profesionales capacitados y verificados.',
+                  style: TextStyle(
+                    fontSize: 26,
+                    fontWeight: FontWeight.bold,
+                    color: Color(0xFF333333),
+                  ),
+                  textAlign: TextAlign.center,
+                ),
+                SizedBox(height: 16),
+                Text(
+                  'Contamos con personal capacitado para tu tipo de vehiculo y con certificaciones.',
+                  style: TextStyle(
+                    fontSize: 17,
+                    color: Colors.black,
+                  ),
+                  textAlign: TextAlign.center,
+                ),
+              ],
+            ),
+          ),
+        ],
       ),
     );
+    // ▲▲▲ FIN DEL CAMBIO ▲▲▲
   }
 }

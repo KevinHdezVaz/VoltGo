@@ -5,7 +5,7 @@ import 'package:flutter/material.dart';
 import 'package:package_info_plus/package_info_plus.dart';
 import 'package:http/http.dart' as http;
 import 'dart:convert';
-import 'package:wisetrack_app/utils/TokenStorage.dart';
+import 'package:Voltgo_app/utils/TokenStorage.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:uuid/uuid.dart';
 
@@ -180,8 +180,7 @@ class NotificationServiceFirebase {
     _log(
         '🔑 Usando token de autorización: ...${authToken.substring(authToken.length - 6)}');
 
-    final url =
-        Uri.parse('https://fleetmobile.wisetrack.cl/user/assign-device');
+    final url = Uri.parse('https://fleetmobile.Voltgo.cl/user/assign-device');
     final headers = {
       'Content-Type': 'application/json; charset=UTF-8',
       'Authorization': 'Token $authToken',

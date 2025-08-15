@@ -9,7 +9,7 @@
       "client_info": {
         "mobilesdk_app_id": "1:773707402802:android:ff27100236b52d9f59762b",
         "android_client_info": {
-          "package_name": "cl.wisetrack.mobileAndroid"
+          "package_name": "us.voltgo.app"
         }
       },
       "oauth_client": [],
@@ -28,7 +28,7 @@
       "client_info": {
         "mobilesdk_app_id": "1:773707402802:android:47ef2ac4cae3f54c59762b",
         "android_client_info": {
-          "package_name": "com.example.wisetrack_app"
+          "package_name": "com.example.Voltgo_app"
         }
       },
       "oauth_client": [],

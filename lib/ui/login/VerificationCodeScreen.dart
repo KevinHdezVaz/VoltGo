@@ -2,10 +2,10 @@ import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:flutter/scheduler.dart';
 import 'package:pinput/pinput.dart';
-import 'package:wisetrack_app/data/services/auth_api_service.dart';
-import 'package:wisetrack_app/ui/color/app_colors.dart';
-import 'package:wisetrack_app/ui/login/ResetPasswordScreenUpdated.dart';
-import 'package:wisetrack_app/utils/AnimatedTruckProgress.dart';
+import 'package:Voltgo_app/data/services/auth_api_service.dart';
+import 'package:Voltgo_app/ui/color/app_colors.dart';
+import 'package:Voltgo_app/ui/login/ResetPasswordScreenUpdated.dart';
+import 'package:Voltgo_app/utils/AnimatedTruckProgress.dart';
 
 class OtpVerificationScreen extends StatefulWidget {
   final String email;

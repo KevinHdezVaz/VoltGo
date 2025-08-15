@@ -1,16 +1,16 @@
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 import 'package:geocoding/geocoding.dart';
-import 'package:wisetrack_app/data/models/vehicles/VehicleAccesories.dart';
- import 'package:wisetrack_app/data/models/vehicles/VehicleDetail.dart';
-import 'package:wisetrack_app/data/services/vehicles_service.dart';
-import 'package:wisetrack_app/ui/MenuPage/auditoria/AuditDetailsScreen.dart';
-import 'package:wisetrack_app/ui/MenuPage/auditoria/AuditoriaScreen.dart';
-import 'package:wisetrack_app/ui/MenuPage/moviles/EditMobileScreen.dart';
-import 'package:wisetrack_app/ui/MenuPage/moviles/MobilesScreen.dart';
-import 'package:wisetrack_app/ui/MenuPage/moviles/SecurityActionsScreen.dart';
-import 'package:wisetrack_app/ui/color/app_colors.dart';
-import 'package:wisetrack_app/utils/AnimatedTruckProgress.dart';
+import 'package:Voltgo_app/data/models/vehicles/VehicleAccesories.dart';
+import 'package:Voltgo_app/data/models/vehicles/VehicleDetail.dart';
+import 'package:Voltgo_app/data/services/vehicles_service.dart';
+import 'package:Voltgo_app/ui/MenuPage/auditoria/AuditDetailsScreen.dart';
+import 'package:Voltgo_app/ui/MenuPage/auditoria/AuditoriaScreen.dart';
+import 'package:Voltgo_app/ui/MenuPage/moviles/EditMobileScreen.dart';
+import 'package:Voltgo_app/ui/MenuPage/moviles/MobilesScreen.dart';
+import 'package:Voltgo_app/ui/MenuPage/moviles/SecurityActionsScreen.dart';
+import 'package:Voltgo_app/ui/color/app_colors.dart';
+import 'package:Voltgo_app/utils/AnimatedTruckProgress.dart';
 
 class VehicleDetailScreen extends StatefulWidget {
   final String plate;
@@ -51,7 +51,8 @@ class _VehicleDetailScreenState extends State<VehicleDetailScreen>
         _getAddressFromCoordinates(vehicleDetail.location);
       }
     }).catchError((error) {
-      debugPrint("Error al cargar detalles del vehículo, no se puede geocodificar: $error");
+      debugPrint(
+          "Error al cargar detalles del vehículo, no se puede geocodificar: $error");
     });
   }
 
@@ -86,13 +87,15 @@ class _VehicleDetailScreenState extends State<VehicleDetailScreen>
 
     try {
       final parts = location.split(',');
-      if (parts.length != 2) throw const FormatException('Formato de ubicación inválido');
+      if (parts.length != 2)
+        throw const FormatException('Formato de ubicación inválido');
       final latString = parts[0].replaceAll(RegExp(r'lat:'), '').trim();
       final lonString = parts[1].replaceAll(RegExp(r'lon:'), '').trim();
       final lat = double.tryParse(latString);
       final lon = double.tryParse(lonString);
 
-      if (lat == null || lon == null) throw const FormatException('Coordenadas inválidas después de limpiar');
+      if (lat == null || lon == null)
+        throw const FormatException('Coordenadas inválidas después de limpiar');
       List<Placemark> placemarks = await placemarkFromCoordinates(lat, lon);
 
       if (mounted && placemarks.isNotEmpty) {
@@ -164,7 +167,8 @@ class _VehicleDetailScreenState extends State<VehicleDetailScreen>
                 return Center(
                     child: Padding(
                         padding: const EdgeInsets.all(20.0),
-                        child: Text('Error al cargar los detalles: ${snapshot.error}',
+                        child: Text(
+                            'Error al cargar los detalles: ${snapshot.error}',
                             textAlign: TextAlign.center)));
               }
 
@@ -201,11 +205,17 @@ class _VehicleDetailScreenState extends State<VehicleDetailScreen>
               _buildDataRow('Ubicación', _address ?? 'Obteniendo dirección...'),
               const SizedBox(height: 24),
               _buildSectionTitle('Seguridad'),
-              _buildDataRow('Alimentación',
-                  vehicle.batteryVolt != null ? '${vehicle.batteryVolt} V' : 'Sin datos'),
+              _buildDataRow(
+                  'Alimentación',
+                  vehicle.batteryVolt != null
+                      ? '${vehicle.batteryVolt} V'
+                      : 'Sin datos'),
               const SizedBox(height: 12),
-              _buildDataRow('Corte de combustible',
-                  vehicle.fuelCutoff.isNotEmpty ? vehicle.fuelCutoff : 'Sin datos'),
+              _buildDataRow(
+                  'Corte de combustible',
+                  vehicle.fuelCutoff.isNotEmpty
+                      ? vehicle.fuelCutoff
+                      : 'Sin datos'),
               const SizedBox(height: 24),
               _buildSectionTitle('Accesorios'),
               _buildAccessoriesSection(),
@@ -243,60 +253,60 @@ class _VehicleDetailScreenState extends State<VehicleDetailScreen>
     );
   }
 
-Widget _buildAccessoryRow(VehicleAccessory accessory) {
-  String status = accessory.status.trim();
-  String statusLowerCase = status.toLowerCase();
-  
-  String displayValue = status;
-  Color displayColor = Colors.black; // Color por defecto
-  IconData displayIcon = Icons.info_outline; // Ícono por defecto
+  Widget _buildAccessoryRow(VehicleAccessory accessory) {
+    String status = accessory.status.trim();
+    String statusLowerCase = status.toLowerCase();
 
-  // Regla 2: Manejar el caso de "Sin Datos" primero.
-  if (status.isEmpty) {
-    displayValue = 'Sin Datos';
-    displayColor = Colors.grey;
-  }
-  // Regla 6: Manejar la Temperatura.
-  else if (accessory.name.toLowerCase().contains('temperatura')) {
-    displayValue = '$status°'; // Añade el símbolo de grado
-    displayColor = Colors.blue;
-    displayIcon = Icons.thermostat;
-  }
-  // Regla 3: Abierta / Cerrada
-  else if (statusLowerCase == 'abierta') {
-    displayColor = Colors.red;
-    displayIcon = Icons.lock_open;
-  } else if (statusLowerCase == 'cerrada') {
-    displayColor = Colors.green;
-    displayIcon = Icons.lock;
-  }
-  // Regla 4: Activado / Desactivado
-  else if (statusLowerCase == 'activado') {
-    displayColor = Colors.green;
-    displayIcon = Icons.toggle_on;
-  } else if (statusLowerCase == 'desactivado') {
-    displayColor = Colors.red;
-    displayIcon = Icons.toggle_off;
-  }
-  // Regla 5: Trabado / Destrabado
-  else if (statusLowerCase == 'trabado') {
-    displayColor = Colors.green;
-    displayIcon = Icons.lock;
-  } else if (statusLowerCase == 'destrabado') {
-    displayColor = Colors.red;
-    displayIcon = Icons.lock_open;
-  }
+    String displayValue = status;
+    Color displayColor = Colors.black; // Color por defecto
+    IconData displayIcon = Icons.info_outline; // Ícono por defecto
 
-  return Padding(
-    padding: const EdgeInsets.symmetric(vertical: 6.0),
-    child: _buildDataRowWithIcon(
-      accessory.name,
-      displayValue,
-      icon: displayIcon,
-      color: displayColor,
-    ),
-  );
-}
+    // Regla 2: Manejar el caso de "Sin Datos" primero.
+    if (status.isEmpty) {
+      displayValue = 'Sin Datos';
+      displayColor = Colors.grey;
+    }
+    // Regla 6: Manejar la Temperatura.
+    else if (accessory.name.toLowerCase().contains('temperatura')) {
+      displayValue = '$status°'; // Añade el símbolo de grado
+      displayColor = Colors.blue;
+      displayIcon = Icons.thermostat;
+    }
+    // Regla 3: Abierta / Cerrada
+    else if (statusLowerCase == 'abierta') {
+      displayColor = Colors.red;
+      displayIcon = Icons.lock_open;
+    } else if (statusLowerCase == 'cerrada') {
+      displayColor = Colors.green;
+      displayIcon = Icons.lock;
+    }
+    // Regla 4: Activado / Desactivado
+    else if (statusLowerCase == 'activado') {
+      displayColor = Colors.green;
+      displayIcon = Icons.toggle_on;
+    } else if (statusLowerCase == 'desactivado') {
+      displayColor = Colors.red;
+      displayIcon = Icons.toggle_off;
+    }
+    // Regla 5: Trabado / Destrabado
+    else if (statusLowerCase == 'trabado') {
+      displayColor = Colors.green;
+      displayIcon = Icons.lock;
+    } else if (statusLowerCase == 'destrabado') {
+      displayColor = Colors.red;
+      displayIcon = Icons.lock_open;
+    }
+
+    return Padding(
+      padding: const EdgeInsets.symmetric(vertical: 6.0),
+      child: _buildDataRowWithIcon(
+        accessory.name,
+        displayValue,
+        icon: displayIcon,
+        color: displayColor,
+      ),
+    );
+  }
 
   Widget _buildDataRowWithIcon(String label, String value,
       {IconData? icon, Color? color}) {
@@ -340,7 +350,8 @@ Widget _buildAccessoryRow(VehicleAccessory accessory) {
         children: [
           GestureDetector(
             onTap: _handleBackAction,
-            child: Image.asset('assets/images/backbtn.png', width: 40, height: 40),
+            child:
+                Image.asset('assets/images/backbtn.png', width: 40, height: 40),
           ),
           Expanded(
             child: Center(
@@ -350,7 +361,9 @@ Widget _buildAccessoryRow(VehicleAccessory accessory) {
                   Text(
                     vehicle.plate,
                     style: const TextStyle(
-                        color: Colors.black, fontWeight: FontWeight.bold, fontSize: 18),
+                        color: Colors.black,
+                        fontWeight: FontWeight.bold,
+                        fontSize: 18),
                   ),
                   IconButton(
                     padding: EdgeInsets.zero,
@@ -361,7 +374,8 @@ Widget _buildAccessoryRow(VehicleAccessory accessory) {
                       Navigator.push(
                         context,
                         MaterialPageRoute(
-                            builder: (context) => EditMobileScreen(plate: vehicle.plate)),
+                            builder: (context) =>
+                                EditMobileScreen(plate: vehicle.plate)),
                       );
                     },
                   ),
@@ -404,7 +418,8 @@ Widget _buildAccessoryRow(VehicleAccessory accessory) {
     final bool isPositive = status.toLowerCase() == 'online' ||
         status.toLowerCase() == 'encendido' ||
         status.toLowerCase() == 'valida';
-    final Color statusColor = isPositive ? Colors.green.shade700 : Colors.red.shade700;
+    final Color statusColor =
+        isPositive ? Colors.green.shade700 : Colors.red.shade700;
 
     return Column(
       children: [
@@ -414,7 +429,8 @@ Widget _buildAccessoryRow(VehicleAccessory accessory) {
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
             Text(title,
-                style: const TextStyle(color: Colors.black, fontWeight: FontWeight.bold)),
+                style: const TextStyle(
+                    color: Colors.black, fontWeight: FontWeight.bold)),
             const SizedBox(width: 4),
             Icon(Icons.info_outline, color: Colors.grey.shade400, size: 14),
           ],
@@ -432,13 +448,16 @@ Widget _buildAccessoryRow(VehicleAccessory accessory) {
       child: Row(
         mainAxisAlignment: MainAxisAlignment.center,
         children: [
-          const Expanded(child: Divider(color: AppColors.primaryIconos, thickness: 1)),
+          const Expanded(
+              child: Divider(color: AppColors.primary, thickness: 1)),
           Padding(
             padding: const EdgeInsets.symmetric(horizontal: 8.0),
             child: Text(title,
-                style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
+                style:
+                    const TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
           ),
-          const Expanded(child: Divider(color: AppColors.primaryIconos, thickness: 1)),
+          const Expanded(
+              child: Divider(color: AppColors.primary, thickness: 1)),
         ],
       ),
     );
@@ -458,17 +477,21 @@ Widget _buildAccessoryRow(VehicleAccessory accessory) {
               Navigator.push(
                 context,
                 MaterialPageRoute(
-                    builder: (context) => AuditDetailsScreen(plate: widget.plate)),
+                    builder: (context) =>
+                        AuditDetailsScreen(plate: widget.plate)),
               );
             },
             style: OutlinedButton.styleFrom(
               padding: const EdgeInsets.symmetric(vertical: 16),
               side: const BorderSide(color: AppColors.primary, width: 1.5),
-              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12.0)),
+              shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(12.0)),
             ),
             child: const Text('Auditoría',
                 style: TextStyle(
-                    color: AppColors.primary, fontWeight: FontWeight.bold, fontSize: 16)),
+                    color: AppColors.primary,
+                    fontWeight: FontWeight.bold,
+                    fontSize: 16)),
           ),
         ),
         const SizedBox(height: 12),
@@ -479,17 +502,21 @@ Widget _buildAccessoryRow(VehicleAccessory accessory) {
               Navigator.push(
                 context,
                 MaterialPageRoute(
-                    builder: (context) => SecurityActionsScreen(plate: widget.plate)),
+                    builder: (context) =>
+                        SecurityActionsScreen(plate: widget.plate)),
               );
             },
             icon: const Icon(Icons.shield_outlined, color: Colors.white),
             label: const Text('Acciones de Seguridad',
                 style: TextStyle(
-                    color: Colors.white, fontWeight: FontWeight.bold, fontSize: 16)),
+                    color: Colors.white,
+                    fontWeight: FontWeight.bold,
+                    fontSize: 16)),
             style: ElevatedButton.styleFrom(
               backgroundColor: AppColors.primary,
               padding: const EdgeInsets.symmetric(vertical: 16),
-              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12.0)),
+              shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(12.0)),
             ),
           ),
         ),

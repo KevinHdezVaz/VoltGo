@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
-import 'package:wisetrack_app/data/models/vehicles/Vehicle.dart';
-import 'package:wisetrack_app/data/services/vehicles_service.dart';
-import 'package:wisetrack_app/ui/color/app_colors.dart';
+import 'package:Voltgo_app/data/models/vehicles/Vehicle.dart';
+import 'package:Voltgo_app/data/services/vehicles_service.dart';
+import 'package:Voltgo_app/ui/color/app_colors.dart';
 
 class FilterBottomSheet extends StatefulWidget {
   final Set<String> initialFilters;

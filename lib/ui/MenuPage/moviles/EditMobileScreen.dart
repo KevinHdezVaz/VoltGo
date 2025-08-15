@@ -1,10 +1,10 @@
 import 'package:flutter/material.dart';
 import 'package:dropdown_button2/dropdown_button2.dart';
-import 'package:wisetrack_app/data/models/vehicles/Vehicle.dart';
-import 'package:wisetrack_app/data/services/vehicles_service.dart';
-import 'package:wisetrack_app/ui/MenuPage/moviles/SuccessDialog.dart';
-import 'package:wisetrack_app/ui/color/app_colors.dart';
-import 'package:wisetrack_app/utils/AnimatedTruckProgress.dart';
+import 'package:Voltgo_app/data/models/vehicles/Vehicle.dart';
+import 'package:Voltgo_app/data/services/vehicles_service.dart';
+import 'package:Voltgo_app/ui/MenuPage/moviles/SuccessDialog.dart';
+import 'package:Voltgo_app/ui/color/app_colors.dart';
+import 'package:Voltgo_app/utils/AnimatedTruckProgress.dart';
 
 class EditMobileScreen extends StatefulWidget {
   final String plate;
@@ -85,7 +85,8 @@ class _EditMobileScreenState extends State<EditMobileScreen>
           );
         } else {
           ScaffoldMessenger.of(context).showSnackBar(
-            const SnackBar(content: Text('No se pudieron guardar los cambios.')),
+            const SnackBar(
+                content: Text('No se pudieron guardar los cambios.')),
           );
         }
       }
@@ -109,7 +110,9 @@ class _EditMobileScreenState extends State<EditMobileScreen>
   String? get _selectedVehicleName {
     if (_selectedVehicleTypeId == null) return null;
     try {
-      return _vehicleTypes.firstWhere((type) => type.id == _selectedVehicleTypeId).name;
+      return _vehicleTypes
+          .firstWhere((type) => type.id == _selectedVehicleTypeId)
+          .name;
     } catch (e) {
       return null;
     }

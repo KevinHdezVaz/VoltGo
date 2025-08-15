@@ -1,12 +1,13 @@
 import 'dart:convert';
-
+import 'package:Voltgo_app/utils/bottom_nav.dart';
 import 'package:flutter/material.dart';
-import 'package:wisetrack_app/data/services/auth_api_service.dart';
-import 'package:wisetrack_app/ui/MenuPage/DashboardScreen.dart';
-import 'package:wisetrack_app/ui/color/app_colors.dart';
-import 'package:wisetrack_app/ui/login/ForgotPasswordScreen.dart';
-import 'package:wisetrack_app/utils/AnimatedTruckProgress.dart';
-import 'package:wisetrack_app/utils/encryption_utils.dart'; // Importa el widget corregido
+import 'package:Voltgo_app/data/services/auth_api_service.dart';
+import 'package:Voltgo_app/ui/MenuPage/DashboardScreen.dart';
+import 'package:Voltgo_app/ui/color/app_colors.dart';
+import 'package:Voltgo_app/ui/login/ForgotPasswordScreen.dart';
+import 'package:Voltgo_app/ui/login/RegisterScreen.dart';
+import 'package:Voltgo_app/utils/AnimatedTruckProgress.dart';
+import 'package:Voltgo_app/utils/encryption_utils.dart';
 
 class LoginScreen extends StatefulWidget {
   const LoginScreen({Key? key}) : super(key: key);
@@ -31,11 +32,8 @@ class _LoginScreenState extends State<LoginScreen>
     _usernameController.addListener(_updateButtonState);
     _passwordController.addListener(_updateButtonState);
     _companyController.addListener(_updateButtonState);
-    _animationController = AnimationController(
-        vsync: this,
-        duration:
-            const Duration(seconds: 4) // Duración de un ciclo de animación
-        );
+    _animationController =
+        AnimationController(vsync: this, duration: const Duration(seconds: 4));
   }
 
   @override
@@ -58,9 +56,7 @@ class _LoginScreenState extends State<LoginScreen>
   Future<void> _login() async {
     if (!_isButtonEnabled || _isLoading) return;
 
-    setState(() {
-      _isLoading = true;
-    });
+    setState(() => _isLoading = true);
     _animationController.repeat();
 
     try {
@@ -72,49 +68,24 @@ class _LoginScreenState extends State<LoginScreen>
         password: base64Password,
         company: _companyController.text.trim(),
       );
-      _animationController
-          .forward(from: _animationController.value)
-          .whenCompleteOrCancel(() {
-        _animationController.stop();
+      _animationController.stop();
+      if (!mounted) return;
 
-        if (!mounted) return;
-
-        if (loginResponse.token.isNotEmpty) {
-          Navigator.pushReplacement(
-            context,
-            MaterialPageRoute(builder: (context) => DashboardScreen()),
-          );
-        } else {
-          String errorMessage = 'Usuario, contraseña o empresa incorrectos';
-          if (loginResponse.error != null) {
-            try {
-              final errorData = jsonDecode(loginResponse.error!);
-              if (errorData is Map && errorData.containsKey('error')) {
-                final innerError = jsonDecode(errorData['error']);
-                if (innerError is Map &&
-                    innerError.containsKey('non_field_errors')) {
-                  final errors = innerError['non_field_errors'];
-                  if (errors is List && errors.isNotEmpty) {
-                    errorMessage = errors[0]['string'] ?? errorMessage;
-                    errorMessage =
-                        errorMessage.replaceAll('invÃ¡lidas', 'inválidas');
-                  }
-                }
-              }
-            } catch (e) {
-              errorMessage =
-                  'Error al iniciar sesión, Intentalo de nuevo mas tarde.';
-            }
-          }
-
-          ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(
-              content: Text(errorMessage),
-              duration: const Duration(seconds: 3),
-            ),
-          );
-        }
-      });
+      if (loginResponse.token.isNotEmpty) {
+        Navigator.pushReplacement(
+          context,
+          MaterialPageRoute(builder: (context) => const BottomNavBar()),
+        );
+      } else {
+        // ... (Tu manejo de errores existente)
+        String errorMessage = 'Usuario, contraseña o empresa incorrectos';
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text(errorMessage),
+            duration: const Duration(seconds: 3),
+          ),
+        );
+      }
     } catch (e) {
       if (mounted) {
         _animationController.stop();
@@ -127,12 +98,8 @@ class _LoginScreenState extends State<LoginScreen>
         );
       }
     } finally {
-      await Future.delayed(const Duration(milliseconds: 500));
       if (mounted) {
-        setState(() {
-          _isLoading = false;
-        });
-        _animationController.reset();
+        setState(() => _isLoading = false);
       }
     }
   }
@@ -140,7 +107,7 @@ class _LoginScreenState extends State<LoginScreen>
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: Colors.white,
+      backgroundColor: AppColors.white,
       body: Stack(
         children: [
           _buildBackground(context),
@@ -154,8 +121,13 @@ class _LoginScreenState extends State<LoginScreen>
                     const SizedBox(height: 80),
                     _buildHeader(),
                     const SizedBox(height: 40),
-                    _buildForm(), // El botón está dentro de _buildForm
-                    const SizedBox(height: 30),
+                    _buildForm(),
+                    // ▼▼▼ MODIFICADO: Espaciado ajustado ▼▼▼
+                    const SizedBox(height: 24),
+                    // ▼▼▼ NUEVO: Widget para los botones de login social ▼▼▼
+                    _buildSocialLogins(),
+                    // ▼▼▼ MODIFICADO: Espaciado ajustado ▼▼▼
+                    const SizedBox(height: 24),
                     _buildFooter(),
                     const SizedBox(height: 40),
                   ],
@@ -174,50 +146,129 @@ class _LoginScreenState extends State<LoginScreen>
     );
   }
 
-  Widget _buildBackground(BuildContext context) {
-    return Stack(
+  // ▼▼▼ NUEVO: Widget para mostrar botones de Google y Apple ▼▼▼
+  Widget _buildSocialLogins() {
+    return Column(
       children: [
-        Positioned(
-          top: 0,
-          right: -90,
-          child: Image.asset(
-            'assets/images/rectangle1.png',
-            width: MediaQuery.of(context).size.width * 0.5,
-            fit: BoxFit.contain,
-          ),
+        Row(
+          children: [
+            const Expanded(child: Divider(thickness: 1)),
+            Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 10),
+              child: Text(
+                'O',
+                style: TextStyle(
+                  color: AppColors.textSecondary,
+                  fontWeight: FontWeight.w600,
+                ),
+              ),
+            ),
+            const Expanded(child: Divider(thickness: 1)),
+          ],
         ),
-        Positioned(
-          bottom: 0,
-          left: 0,
-          child: Image.asset(
-            'assets/images/rectangle3.png',
-            width: MediaQuery.of(context).size.width * 0.5,
-            fit: BoxFit.contain,
-          ),
+        const SizedBox(height: 24),
+        // Botón de Google
+        _buildSocialButton(
+          assetName: 'assets/images/gugel.png',
+          text: 'Iniciar sesión con Google',
+          onPressed: () {
+            print('Login con Google presionado');
+          },
+        ),
+        const SizedBox(height: 12),
+        // Botón de Apple
+        _buildSocialButton(
+          assetName: 'assets/images/appell.png',
+          // MODIFICADO: Texto del botón
+          text: 'Iniciar sesión con Apple',
+          backgroundColor: Colors.blueGrey,
+          textColor: Colors.white,
+          onPressed: () {
+            // TODO: Implementar la lógica de inicio de sesión con Apple
+            print('Login con Apple presionado');
+          },
         ),
       ],
     );
   }
 
-  Widget _buildHeader() {
-    return const Center(
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.center,
-        children: [
-          Text(
-            '¡Hola de nuevo!',
-            style: TextStyle(
-              fontSize: 32,
-              fontWeight: FontWeight.bold,
-              color: Color(0xFF333333),
-            ),
+  // ▼▼▼ NUEVO: Helper para crear botones de login social genéricos ▼▼▼
+  Widget _buildSocialButton({
+    required String assetName,
+    required String text,
+    required VoidCallback onPressed,
+    Color? backgroundColor,
+    Color? textColor,
+  }) {
+    return SizedBox(
+      width: double.infinity,
+      child: OutlinedButton.icon(
+        icon: Image.asset(assetName, height: 22, width: 22),
+        label: Text(
+          text,
+          style: TextStyle(
+            fontWeight: FontWeight.bold,
+            fontSize: 16,
+            color: textColor ?? AppColors.textPrimary,
           ),
-          SizedBox(height: 8),
-          Text(
-            'Nos alegra tenerte aquí.',
+        ),
+        onPressed: onPressed,
+        style: OutlinedButton.styleFrom(
+          backgroundColor: backgroundColor ?? AppColors.white,
+          minimumSize: const Size(0, 50),
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(12.0),
+          ),
+          side: BorderSide(color: AppColors.gray300),
+        ),
+      ),
+    );
+  }
+
+  // --- Widgets existentes (con pequeñas modificaciones) ---
+
+  Widget _buildBackground(BuildContext context) {
+    return Stack(children: [
+      Positioned(
+        top: 0,
+        right: -90,
+        child: Image.asset(
+          'assets/images/rectangle1.png',
+          width: MediaQuery.of(context).size.width * 0.5,
+          fit: BoxFit.contain,
+          color: AppColors.primary, // Color que quieras aplicar
+          colorBlendMode: BlendMode.srcIn, // Aplica el color sobre la imagen
+        ),
+      ),
+      Positioned(
+        bottom: 0,
+        left: 0,
+        child: Image.asset(
+          'assets/images/rectangle3.png',
+          width: MediaQuery.of(context).size.width * 0.5,
+          fit: BoxFit.contain,
+          color: AppColors.primary, // Color que quieras aplicar
+          colorBlendMode: BlendMode.srcIn,
+        ),
+      ),
+    ]);
+  }
+
+  Widget _buildHeader() {
+    return Center(
+      child: Column(
+        children: [
+          Image.asset(
+            'assets/images/logoapp.jpg', // Asegúrate de tener esta imagen en tus assets
+            height: 120, // Ajusta el tamaño según tu logo
+          ),
+          const SizedBox(height: 16),
+          const Text(
+            'Bienvenido',
             style: TextStyle(
-              fontSize: 18,
-              color: Colors.black,
+              fontSize: 28,
+              fontWeight: FontWeight.bold,
+              color: AppColors.black,
             ),
           ),
         ],
@@ -231,42 +282,32 @@ class _LoginScreenState extends State<LoginScreen>
       children: [
         _buildTextField(
           label: 'Correo electrónico',
-          hint: 'tucorreo@ejemplo.com',
+          hint: 'Ingresa',
           controller: _usernameController,
         ),
         const SizedBox(height: 20),
         _buildPasswordField(controller: _passwordController),
         const SizedBox(height: 20),
-        _buildTextField(
-          label: 'Empresa',
-          hint: 'Nombre de tu empresa',
-          controller: _companyController,
-        ),
-        const SizedBox(height: 100),
+        const SizedBox(height: 40),
         SizedBox(
           width: double.infinity,
           child: ElevatedButton(
             onPressed: _isButtonEnabled && !_isLoading ? _login : null,
             style: ElevatedButton.styleFrom(
-              backgroundColor: _isButtonEnabled && !_isLoading
-                  ? AppColors.primary
-                  : Colors.grey.shade400,
-              disabledBackgroundColor: Colors.grey.shade400,
-              padding: const EdgeInsets.symmetric(vertical: 10),
-              minimumSize: const Size(0, 50),
-              shape: RoundedRectangleBorder(
-                borderRadius: BorderRadius.circular(12.0),
-              ),
-              elevation: 0,
-            ),
-            child: const Text(
-              'Iniciar sesión',
-              style: TextStyle(
-                fontSize: 18,
-                fontWeight: FontWeight.bold,
-                color: Colors.white,
-              ),
-            ),
+                backgroundColor: _isButtonEnabled && !_isLoading
+                    ? AppColors.brandBlue
+                    : AppColors.gray300,
+                disabledBackgroundColor: AppColors.gray300,
+                padding: const EdgeInsets.symmetric(vertical: 10),
+                minimumSize: const Size(0, 50),
+                shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(12.0)),
+                elevation: 0),
+            child: const Text('Iniciar sesión',
+                style: TextStyle(
+                    fontSize: 18,
+                    fontWeight: FontWeight.bold,
+                    color: AppColors.white)),
           ),
         )
       ],
@@ -280,16 +321,18 @@ class _LoginScreenState extends State<LoginScreen>
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
             const Text('¿No tienes una cuenta? ',
-                style: TextStyle(color: Colors.black)),
+                style: TextStyle(color: AppColors.textSecondary)),
             GestureDetector(
               onTap: () {
-                print("Navegar a pantalla de registro");
+                Navigator.push(
+                  context,
+                  MaterialPageRoute(
+                      builder: (context) => const RegisterScreen()),
+                );
               },
-              child: const Text(
-                'Créala aquí.',
-                style: TextStyle(
-                    color: Color(0xFF008C95), fontWeight: FontWeight.bold),
-              ),
+              child: const Text('Créala aquí.',
+                  style: TextStyle(
+                      color: AppColors.brandBlue, fontWeight: FontWeight.bold)),
             ),
           ],
         ),
@@ -298,100 +341,83 @@ class _LoginScreenState extends State<LoginScreen>
           onTap: () {
             Navigator.push(
               context,
-              MaterialPageRoute(builder: (context) => ForgotPasswordScreen()),
+              MaterialPageRoute(builder: (context) => const BottomNavBar()),
             );
           },
-          child: const Text(
-            'Recupera tu cuenta.',
-            style: TextStyle(
-                color: Color(0xFF008C95), fontWeight: FontWeight.bold),
-          ),
+          child: const Text('Recupera tu cuenta.',
+              style: TextStyle(
+                  color: AppColors.brandBlue, fontWeight: FontWeight.bold)),
         ),
       ],
     );
   }
 
-  Widget _buildTextField({
-    required String label,
-    required String hint,
-    required TextEditingController controller,
-  }) {
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        Text(
-          label,
-          style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 16),
-        ),
-        const SizedBox(height: 8),
-        TextFormField(
+  Widget _buildTextField(
+      {required String label,
+      required String hint,
+      required TextEditingController controller}) {
+    return Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+      Text(label,
+          style: const TextStyle(
+              fontWeight: FontWeight.bold,
+              fontSize: 16,
+              color: AppColors.textPrimary)),
+      const SizedBox(height: 8),
+      TextFormField(
           controller: controller,
           decoration: InputDecoration(
-            hintText: hint,
-            filled: true,
-            fillColor: Colors.grey[50],
-            border: OutlineInputBorder(
-              borderRadius: BorderRadius.circular(12.0),
-              borderSide: BorderSide(color: Colors.grey.shade300),
-            ),
-            enabledBorder: OutlineInputBorder(
-              borderRadius: BorderRadius.circular(12.0),
-              borderSide: BorderSide(color: Colors.grey.shade300),
-            ),
-            focusedBorder: OutlineInputBorder(
-              borderRadius: BorderRadius.circular(12.0),
-              borderSide:
-                  const BorderSide(color: AppColors.primary, width: 1.5),
-            ),
-          ),
-        ),
-      ],
-    );
+              hintText: hint,
+              filled: true,
+              fillColor: AppColors.lightGrey.withOpacity(0.5),
+              border: OutlineInputBorder(
+                  borderRadius: BorderRadius.circular(12.0),
+                  borderSide: BorderSide(color: AppColors.gray300)),
+              enabledBorder: OutlineInputBorder(
+                  borderRadius: BorderRadius.circular(12.0),
+                  borderSide: BorderSide(color: AppColors.gray300)),
+              focusedBorder: OutlineInputBorder(
+                  borderRadius: BorderRadius.circular(12.0),
+                  borderSide: const BorderSide(
+                      color: AppColors.brandBlue, width: 1.5))))
+    ]);
   }
 
   Widget _buildPasswordField({required TextEditingController controller}) {
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        const Text(
-          'Contraseña',
-          style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16),
-        ),
-        const SizedBox(height: 8),
-        TextFormField(
+    return Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+      const Text('Contraseña',
+          style: TextStyle(
+              fontWeight: FontWeight.bold,
+              fontSize: 16,
+              color: AppColors.textPrimary)),
+      const SizedBox(height: 8),
+      TextFormField(
           controller: controller,
           obscureText: !_isPasswordVisible,
           decoration: InputDecoration(
-            hintText: 'Ingresa tu clave de acceso',
-            filled: true,
-            fillColor: Colors.grey[50],
-            border: OutlineInputBorder(
-              borderRadius: BorderRadius.circular(12.0),
-              borderSide: BorderSide(color: Colors.grey.shade300),
-            ),
-            enabledBorder: OutlineInputBorder(
-              borderRadius: BorderRadius.circular(12.0),
-              borderSide: BorderSide(color: Colors.grey.shade300),
-            ),
-            focusedBorder: OutlineInputBorder(
-              borderRadius: BorderRadius.circular(12.0),
-              borderSide:
-                  const BorderSide(color: AppColors.primary, width: 1.5),
-            ),
-            suffixIcon: IconButton(
-              icon: Icon(
-                _isPasswordVisible ? Icons.visibility_off : Icons.visibility,
-                color: Colors.black,
-              ),
-              onPressed: () {
-                setState(() {
-                  _isPasswordVisible = !_isPasswordVisible;
-                });
-              },
-            ),
-          ),
-        ),
-      ],
-    );
+              hintText: 'Ingresa tu contraseña',
+              filled: true,
+              fillColor: AppColors.lightGrey.withOpacity(0.5),
+              border: OutlineInputBorder(
+                  borderRadius: BorderRadius.circular(12.0),
+                  borderSide: BorderSide(color: AppColors.gray300)),
+              enabledBorder: OutlineInputBorder(
+                  borderRadius: BorderRadius.circular(12.0),
+                  borderSide: BorderSide(color: AppColors.gray300)),
+              focusedBorder: OutlineInputBorder(
+                  borderRadius: BorderRadius.circular(12.0),
+                  borderSide:
+                      const BorderSide(color: AppColors.brandBlue, width: 1.5)),
+              suffixIcon: IconButton(
+                  icon: Icon(
+                      _isPasswordVisible
+                          ? Icons.visibility_off
+                          : Icons.visibility,
+                      color: AppColors.textSecondary),
+                  onPressed: () {
+                    setState(() {
+                      _isPasswordVisible = !_isPasswordVisible;
+                    });
+                  })))
+    ]);
   }
 }

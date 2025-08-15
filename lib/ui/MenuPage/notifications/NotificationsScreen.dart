@@ -1,13 +1,13 @@
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
-import 'package:wisetrack_app/data/models/NotificationItem.dart' as model;
-import 'package:wisetrack_app/data/services/NotificationsService.dart';
-import 'package:wisetrack_app/data/models/alert/NotificationPermissions.dart';
-import 'package:wisetrack_app/ui/MenuPage/notifications/NotificationDetailScreen.dart';
-import 'package:wisetrack_app/ui/color/app_colors.dart';
-import 'package:wisetrack_app/utils/AnimatedTruckProgress.dart';
-import 'package:wisetrack_app/utils/NotificationCountService.dart';
-import 'package:wisetrack_app/utils/ReadStatusManager.dart';
+import 'package:Voltgo_app/data/models/NotificationItem.dart' as model;
+import 'package:Voltgo_app/data/services/NotificationsService.dart';
+import 'package:Voltgo_app/data/models/alert/NotificationPermissions.dart';
+import 'package:Voltgo_app/ui/MenuPage/notifications/NotificationDetailScreen.dart';
+import 'package:Voltgo_app/ui/color/app_colors.dart';
+import 'package:Voltgo_app/utils/AnimatedTruckProgress.dart';
+import 'package:Voltgo_app/utils/NotificationCountService.dart';
+import 'package:Voltgo_app/utils/ReadStatusManager.dart';
 
 class NotificationsScreen extends StatefulWidget {
   const NotificationsScreen({Key? key}) : super(key: key);
@@ -23,7 +23,7 @@ class _NotificationsScreenState extends State<NotificationsScreen>
   String? _errorMessage;
   late AnimationController _animationController;
   final ScrollController _scrollController = ScrollController();
-  
+
   // Paginación
   int _currentPage = 1;
   bool _isFetchingMore = false;
@@ -36,8 +36,9 @@ class _NotificationsScreenState extends State<NotificationsScreen>
   List<model.Notification> _allNotifications = [];
   List<model.Notification> _todayNotifications = [];
   List<model.Notification> _previousNotifications = [];
-  Set<int> _readNotificationIds = {}; 
-  Set<int> _todayMasterIds = {}; // Almacena los IDs originales de hoy para la separación
+  Set<int> _readNotificationIds = {};
+  Set<int> _todayMasterIds =
+      {}; // Almacena los IDs originales de hoy para la separación
 
   NotificationPermissions? _notificationPermissions;
 
@@ -76,19 +77,20 @@ class _NotificationsScreenState extends State<NotificationsScreen>
       if (mounted) {
         setState(() {
           // 1. Guardar los IDs de las notificaciones de hoy para poder separarlas después
-          _todayMasterIds = notificationData.todayNotifications.map((n) => n.id).toSet();
+          _todayMasterIds =
+              notificationData.todayNotifications.map((n) => n.id).toSet();
 
           // 2. Combinar todas las notificaciones en una sola lista
           _allNotifications = [
             ...notificationData.todayNotifications,
             ...notificationData.previousNotifications,
           ];
-          
+
           // 3. Ordenar la lista completa. La más reciente (ID más alto) primero.
           _allNotifications.sort((a, b) => b.id.compareTo(a.id));
 
           _readNotificationIds = readIds;
-          
+
           // 4. Generar filtros y aplicar la lógica de visualización
           _generateFiltersFromNotifications(_allNotifications);
           _applyFilters();
@@ -111,7 +113,8 @@ class _NotificationsScreenState extends State<NotificationsScreen>
   /// Listener del scroll para detectar el final y cargar más datos.
   void _onScroll() {
     if (_scrollController.position.pixels >=
-            _scrollController.position.maxScrollExtent - 200 && // Margen para cargar antes
+            _scrollController.position.maxScrollExtent -
+                200 && // Margen para cargar antes
         !_isFetchingMore) {
       _fetchMoreNotifications();
     }
@@ -136,11 +139,11 @@ class _NotificationsScreenState extends State<NotificationsScreen>
         });
       } else {
         // Si no vienen más, detenemos las futuras llamadas para esta sesión.
-         _currentPage--; 
+        _currentPage--;
       }
     } catch (e) {
       debugPrint("Error al obtener más notificaciones: $e");
-       _currentPage--; // Revertir en caso de error
+      _currentPage--; // Revertir en caso de error
     } finally {
       if (mounted) {
         setState(() => _isFetchingMore = false);
@@ -160,7 +163,7 @@ class _NotificationsScreenState extends State<NotificationsScreen>
         _readNotificationIds.add(notification.id);
       });
       ReadStatusManager.markNotificationAsRead(notification.id);
-            NotificationCountService.decrementCount();
+      NotificationCountService.decrementCount();
     }
 
     Navigator.push(
@@ -174,7 +177,8 @@ class _NotificationsScreenState extends State<NotificationsScreen>
   }
 
   /// Genera los chips de filtro basados en los tipos de notificación recibidos.
-  void _generateFiltersFromNotifications(List<model.Notification> notifications) {
+  void _generateFiltersFromNotifications(
+      List<model.Notification> notifications) {
     final availableTypes = notifications
         .map((n) => n.type)
         .toSet()
@@ -184,14 +188,12 @@ class _NotificationsScreenState extends State<NotificationsScreen>
       _filters = ['Todas', ...availableTypes];
     });
   }
-  
- 
+
   void _applyFilters() {
     setState(() {
       // Filtrar la lista maestra ordenada
-      List<model.Notification> filtered = _allNotifications
-          .where((n) => _isAlertTypeAllowed(n.type))
-          .toList();
+      List<model.Notification> filtered =
+          _allNotifications.where((n) => _isAlertTypeAllowed(n.type)).toList();
 
       if (_selectedFilterIndex != 0) {
         final selectedType = _filters[_selectedFilterIndex];
@@ -200,11 +202,13 @@ class _NotificationsScreenState extends State<NotificationsScreen>
 
       // Separar la lista filtrada en 'Hoy' y 'Anteriores' para la UI
       // La ordenación se mantiene porque 'filtered' ya está ordenada.
-      _todayNotifications = filtered.where((n) => _todayMasterIds.contains(n.id)).toList();
-      _previousNotifications = filtered.where((n) => !_todayMasterIds.contains(n.id)).toList();
+      _todayNotifications =
+          filtered.where((n) => _todayMasterIds.contains(n.id)).toList();
+      _previousNotifications =
+          filtered.where((n) => !_todayMasterIds.contains(n.id)).toList();
     });
   }
-  
+
   /// Verifica si un tipo de alerta está permitido según la configuración del usuario.
   bool _isAlertTypeAllowed(String alertType) {
     if (_notificationPermissions == null ||
@@ -215,10 +219,11 @@ class _NotificationsScreenState extends State<NotificationsScreen>
 
     return (p.maxSpeed && alertType == 'Velocidad Maxima') ||
         (p.shortBreak && alertType == 'descanso corto') ||
-        (p.noArrivalAtDestination && alertType == 'No presentación en destino') ||
+        (p.noArrivalAtDestination &&
+            alertType == 'No presentación en destino') ||
         (p.tenHoursDriving && alertType == 'conduccion 10 Horas') ||
         (p.continuousDriving && alertType == 'conduccion continua') ||
-        (p.test && alertType == 'Test'); 
+        (p.test && alertType == 'Test');
   }
 
   @override
@@ -255,14 +260,17 @@ class _NotificationsScreenState extends State<NotificationsScreen>
   Widget _buildBodyContent() {
     if (_errorMessage != null) {
       return Center(
-          child: Text(_errorMessage!, style: const TextStyle(color: Colors.red)));
+          child:
+              Text(_errorMessage!, style: const TextStyle(color: Colors.red)));
     }
     if (_notificationPermissions != null &&
         !_notificationPermissions!.allowNotification) {
-      return const Center(child: Text('Las notificaciones están desactivadas.'));
+      return const Center(
+          child: Text('Las notificaciones están desactivadas.'));
     }
 
-    final bool hasNoVisibleNotifications = _todayNotifications.isEmpty && _previousNotifications.isEmpty;
+    final bool hasNoVisibleNotifications =
+        _todayNotifications.isEmpty && _previousNotifications.isEmpty;
     if (hasNoVisibleNotifications) {
       return const Center(child: Text('No hay notificaciones para mostrar.'));
     }
@@ -332,7 +340,7 @@ class _NotificationsScreenState extends State<NotificationsScreen>
       ),
     );
   }
-  
+
   Widget _buildNotificationTile(model.Notification notification) {
     final bool isUnread = !_readNotificationIds.contains(notification.id);
     String extractPlate(String body) {
@@ -389,13 +397,15 @@ class _NotificationsScreenState extends State<NotificationsScreen>
   IconData _getIconForAlert(String alertName) {
     String name = alertName.toLowerCase();
     if (name.contains('velocidad')) return Icons.speed;
-    if (name.contains('conduccion') || name.contains('horas') || name.contains('continua')) return Icons.time_to_leave;
+    if (name.contains('conduccion') ||
+        name.contains('horas') ||
+        name.contains('continua')) return Icons.time_to_leave;
     if (name.contains('descanso')) return Icons.hotel;
     if (name.contains('destino')) return Icons.location_on;
-    if (name.contains('test')) return Icons.science; 
+    if (name.contains('test')) return Icons.science;
     return Icons.notifications;
   }
-  
+
   Widget _buildBackButton(BuildContext context) {
     return IconButton(
       icon: Image.asset('assets/images/backbtn.png', width: 40, height: 40),
@@ -410,7 +420,7 @@ class _NotificationsScreenState extends State<NotificationsScreen>
           style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
     );
   }
-  
+
   Widget _buildFooter() {
     return Padding(
       padding: const EdgeInsets.symmetric(vertical: 24.0),
@@ -419,7 +429,8 @@ class _NotificationsScreenState extends State<NotificationsScreen>
           Text('¿No encuentras más notificaciones?',
               style: TextStyle(color: Colors.grey.shade700)),
           TextButton(
-            onPressed: () {}, // TODO: Implementar navegación a pantalla de historial si existe
+            onPressed:
+                () {}, // TODO: Implementar navegación a pantalla de historial si existe
             child: const Text('Ir al historial',
                 style: TextStyle(
                     color: AppColors.primary, fontWeight: FontWeight.bold)),

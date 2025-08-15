@@ -6,7 +6,7 @@ plugins {
 }
 
 android {
-    namespace = "cl.wisetrack.mobileAndroid"
+    namespace = "us.voltgo.app"
     compileSdk = flutter.compileSdkVersion
     ndkVersion = flutter.ndkVersion
 
@@ -20,7 +20,7 @@ android {
     }
 
     defaultConfig {
-        applicationId = "cl.wisetrack.mobileAndroid"
+        applicationId = "us.voltgo.app"
         minSdk = flutter.minSdkVersion
         targetSdk = flutter.targetSdkVersion
         versionCode = flutter.versionCode

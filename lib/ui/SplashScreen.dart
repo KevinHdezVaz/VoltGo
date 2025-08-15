@@ -91,7 +91,7 @@ class _SplashScreenState extends State<SplashScreen>
               child: Padding(
                 padding: EdgeInsets.only(bottom: 40.0),
                 child: Text(
-                  'Powered by Wisetrack',
+                  'Powered by Voltgo',
                   style: TextStyle(
                     color: Colors.white70,
                     fontSize: 12,

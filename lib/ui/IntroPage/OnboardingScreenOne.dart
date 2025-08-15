@@ -1,128 +1,70 @@
 import 'package:flutter/material.dart';
-import 'package:wisetrack_app/ui/IntroPage/OnboardingScreenTwo.dart';
-import 'package:wisetrack_app/ui/color/app_colors.dart';
+import 'package:lottie/lottie.dart';
 
 class OnboardingScreenOne extends StatelessWidget {
-  final PageController pageController;
-
-  const OnboardingScreenOne({Key? key, required this.pageController})
-      : super(key: key);
+  const OnboardingScreenOne({Key? key}) : super(key: key);
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      backgroundColor: Colors.white,
-      body: Stack(
-        children: [
-          Positioned(
-            top: 0,
-            right: 0,
-            child: Image.asset(
-              'assets/images/rectangle1.png',
-              width: MediaQuery.of(context).size.width * 0.5,
-              fit: BoxFit.contain,
-            ),
+    return Stack(
+      children: [
+        // Fondo de la página 1 (no cambia)
+        Positioned(
+          top: 0,
+          right: 0,
+          child: Image.asset(
+            'assets/images/rectangle1.png',
+            width: MediaQuery.of(context).size.width * 0.5,
+            fit: BoxFit.contain,
           ),
-          SafeArea(
-            child: Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 24.0),
-              child: Column(
-                mainAxisAlignment: MainAxisAlignment.start,
-                crossAxisAlignment: CrossAxisAlignment.center,
-                children: [
-                  const SizedBox(height: 60),
-                  Image.asset(
-                    'assets/images/introPage1.png', // Reemplaza con tu ilustración principal
-                    height: 400,
+        ),
+        Center(
+          child: Padding(
+            padding:
+                const EdgeInsets.symmetric(horizontal: 24.0, vertical: 40.0),
+            child: Column(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                // ▼▼▼ CAMBIO PRINCIPAL ▼▼▼
+                // La animación ahora ocupa el espacio disponible de forma flexible.
+                Expanded(
+                  flex: 2, // Le damos el doble de prioridad de espacio
+                  child: Lottie.asset(
+                    'assets/images/animation11.json',
+                    // Ya no necesitamos 'height' porque Expanded maneja el tamaño.
                   ),
-                  const SizedBox(height: 50),
-                  const Text(
-                    'Seguimiento en línea',
-                    style: TextStyle(
-                      fontSize: 24,
-                      fontWeight: FontWeight.bold,
-                      color: Colors.black87,
-                    ),
-                    textAlign: TextAlign.center,
-                  ),
-                  const SizedBox(height: 10),
-                  const Text(
-                    'Monitoreo de tu flota en tiempo real.',
-                    style: TextStyle(
-                      fontSize: 16,
-                      color: Colors.black,
-                    ),
-                    textAlign: TextAlign.center,
-                  ),
-                  const Spacer(),
-                  Row(
-                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                    crossAxisAlignment: CrossAxisAlignment.center,
-                    children: [
-                      Row(
-                        children: [
-                          Container(
-                            width: 80.0,
-                            height: 8.0,
-                            decoration: BoxDecoration(
-                              color: AppColors.primary,
-                              borderRadius: BorderRadius.circular(4.0),
-                            ),
-                          ),
-                          const SizedBox(width: 8.0),
-                          Container(
-                            width:
-                                8.0, // Puedes ajustar este valor para cambiar el largo
-                            height: 8.0,
-                            decoration: BoxDecoration(
-                              color: Colors.grey[300],
-                              borderRadius: BorderRadius.circular(
-                                  4.0), // Esquinas redondeadas
-                            ),
-                          ),
-                          const SizedBox(width: 8.0),
-                          Container(
-                            width: 8.0,
-                            height: 8.0,
-                            decoration: BoxDecoration(
-                              color: Colors.grey[300],
-                              shape: BoxShape.circle,
-                            ),
-                          ),
-                        ],
+                ),
+                // ▲▲▲ FIN DEL CAMBIO ▲▲▲
+
+                // Agrupamos el texto en otro Expanded para que ocupe el espacio restante.
+                const Expanded(
+                  flex: 1, // Ocupa la mitad de espacio que la animación
+                  child: Column(
+                    mainAxisAlignment:
+                        MainAxisAlignment.start, // Alinea el texto arriba
+                    children: const [
+                      Text(
+                        '¿Emergencia en el camino?',
+                        style: TextStyle(
+                            fontSize: 30,
+                            fontWeight: FontWeight.bold,
+                            color: Colors.black87),
+                        textAlign: TextAlign.center,
                       ),
-                      ElevatedButton(
-                        onPressed: () {
-                          pageController.nextPage(
-                            duration: const Duration(milliseconds: 300),
-                            curve: Curves.easeInOut,
-                          );
-                        },
-                        style: ElevatedButton.styleFrom(
-                          backgroundColor: AppColors.primary,
-                          padding: const EdgeInsets.symmetric(
-                              horizontal: 40, vertical: 15),
-                          shape: RoundedRectangleBorder(
-                            borderRadius: BorderRadius.circular(20.0),
-                          ),
-                        ),
-                        child: const Text(
-                          'Continuar',
-                          style: TextStyle(
-                            fontSize: 16,
-                            color: Colors.white,
-                          ),
-                        ),
+                      SizedBox(height: 10),
+                      Text(
+                        'Solicita un tecnico y sigue su trayeccto en tiempo real',
+                        style: TextStyle(fontSize: 16, color: Colors.black),
+                        textAlign: TextAlign.center,
                       ),
                     ],
                   ),
-                  const SizedBox(height: 40),
-                ],
-              ),
+                ),
+              ],
             ),
           ),
-        ],
-      ),
+        ),
+      ],
     );
   }
 }

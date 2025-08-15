@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
-import 'package:wisetrack_app/data/models/dashboard/BalanceResponse.dart';
-import 'package:wisetrack_app/data/services/DashboardService.dart';
-import 'package:wisetrack_app/utils/AnimatedTruckProgress.dart';
+import 'package:Voltgo_app/data/models/dashboard/BalanceResponse.dart';
+import 'package:Voltgo_app/data/services/DashboardService.dart';
+import 'package:Voltgo_app/utils/AnimatedTruckProgress.dart';
 
 class BalanceScreen extends StatefulWidget {
   const BalanceScreen({Key? key}) : super(key: key);

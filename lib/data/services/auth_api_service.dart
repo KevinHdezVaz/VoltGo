@@ -1,11 +1,11 @@
 import 'dart:convert';
 import 'package:http/http.dart' as http;
-import 'package:wisetrack_app/data/models/LOGIN/ResetPasswordModel.dart';
-import 'package:wisetrack_app/data/models/LOGIN/login_request_model.dart';
-import 'package:wisetrack_app/data/models/LOGIN/logout_response.dart'; // Asegúrate que esta es la ruta correcta a tu nuevo modelo
-import 'package:wisetrack_app/data/services/UserCacheService.dart';
-import 'package:wisetrack_app/utils/TokenStorage.dart';
-import 'package:wisetrack_app/utils/constants.dart';
+import 'package:Voltgo_app/data/models/LOGIN/ResetPasswordModel.dart';
+import 'package:Voltgo_app/data/models/LOGIN/login_request_model.dart';
+import 'package:Voltgo_app/data/models/LOGIN/logout_response.dart'; // Asegúrate que esta es la ruta correcta a tu nuevo modelo
+import 'package:Voltgo_app/data/services/UserCacheService.dart';
+import 'package:Voltgo_app/utils/TokenStorage.dart';
+import 'package:Voltgo_app/utils/constants.dart';
 
 class AuthService {
   static Future<LoginResponse> login({
@@ -60,60 +60,60 @@ class AuthService {
     }
   }
 
-static Future<LogoutResponse> logout() async {
-  final token = await TokenStorage.getToken();
-  print('Intentando logout - Token obtenido: $token');
+  static Future<LogoutResponse> logout() async {
+    final token = await TokenStorage.getToken();
+    print('Intentando logout - Token obtenido: $token');
 
-  // Si no hay token, no hay nada que hacer en el servidor, pero sí podemos limpiar la caché local
-  if (token == null) {
-    print('No hay token almacenado. Limpiando caché local por si acaso.');
-    await TokenStorage.deleteToken();
-    await UserCacheService.clearUserData(); // <--- AÑADIDO AQUÍ
-    return LogoutResponse(
-      detail: 'No hay token almacenado',
-    );
-  }
-
-  final url = Uri.parse('${Constants.baseUrl}/user-logout');
-  print('URL de logout: $url');
-
-  try {
-    final response = await http.post(
-      url,
-      headers: {
-        'Content-Type': 'application/json',
-        'Authorization': 'Token $token',
-      },
-    );
-
-    print('Respuesta recibida - Status Code: ${response.statusCode}');
-    print('Cuerpo de la respuesta: ${response.body}');
-
-    // Limpia los datos locales SIN IMPORTAR la respuesta del servidor
-    await TokenStorage.deleteToken();
-    print('Token eliminado de TokenStorage');
-    await UserCacheService.clearUserData(); // <--- AÑADIDO AQUÍ
-    print('Datos de usuario eliminados de UserCacheService');
-
-    if (response.statusCode == 200) {
-      return LogoutResponse.fromJson(jsonDecode(response.body));
-    } else {
-      final errorMsg = 'Error: ${response.statusCode} - ${response.body}';
-      print('Error en logout: $errorMsg');
+    // Si no hay token, no hay nada que hacer en el servidor, pero sí podemos limpiar la caché local
+    if (token == null) {
+      print('No hay token almacenado. Limpiando caché local por si acaso.');
+      await TokenStorage.deleteToken();
+      await UserCacheService.clearUserData(); // <--- AÑADIDO AQUÍ
       return LogoutResponse(
-        detail: errorMsg,
+        detail: 'No hay token almacenado',
       );
     }
-  } catch (e) {
-    // Si hay una excepción (ej. sin internet), también limpiamos los datos locales
-    await TokenStorage.deleteToken();
-    await UserCacheService.clearUserData(); // <--- AÑADIDO AQUÍ TAMBIÉN
-    print('Excepción en logout: $e. Limpiando datos locales.');
-    return LogoutResponse(
-      detail: 'Exception: $e',
-    );
+
+    final url = Uri.parse('${Constants.baseUrl}/user-logout');
+    print('URL de logout: $url');
+
+    try {
+      final response = await http.post(
+        url,
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': 'Token $token',
+        },
+      );
+
+      print('Respuesta recibida - Status Code: ${response.statusCode}');
+      print('Cuerpo de la respuesta: ${response.body}');
+
+      // Limpia los datos locales SIN IMPORTAR la respuesta del servidor
+      await TokenStorage.deleteToken();
+      print('Token eliminado de TokenStorage');
+      await UserCacheService.clearUserData(); // <--- AÑADIDO AQUÍ
+      print('Datos de usuario eliminados de UserCacheService');
+
+      if (response.statusCode == 200) {
+        return LogoutResponse.fromJson(jsonDecode(response.body));
+      } else {
+        final errorMsg = 'Error: ${response.statusCode} - ${response.body}';
+        print('Error en logout: $errorMsg');
+        return LogoutResponse(
+          detail: errorMsg,
+        );
+      }
+    } catch (e) {
+      // Si hay una excepción (ej. sin internet), también limpiamos los datos locales
+      await TokenStorage.deleteToken();
+      await UserCacheService.clearUserData(); // <--- AÑADIDO AQUÍ TAMBIÉN
+      print('Excepción en logout: $e. Limpiando datos locales.');
+      return LogoutResponse(
+        detail: 'Exception: $e',
+      );
+    }
   }
-}
 
   static Future<String?> getStoredToken() async {
     final token = await TokenStorage.getToken();

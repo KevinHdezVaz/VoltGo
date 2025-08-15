@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import 'package:wisetrack_app/ui/color/app_colors.dart';
+import 'package:Voltgo_app/ui/color/app_colors.dart';
 
 enum DialogType { success, warning, error }
 
@@ -173,7 +173,7 @@ void showErrorDialog(BuildContext context) {
           ),
           TextSpan(text: ' o a '),
           TextSpan(
-            text: 'sac@wisetrack.cl',
+            text: 'sac@Voltgo.cl',
             style: TextStyle(
                 color: AppColors.primary, fontWeight: FontWeight.bold),
           ),

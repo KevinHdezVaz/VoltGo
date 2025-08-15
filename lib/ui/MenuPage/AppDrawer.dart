@@ -2,10 +2,10 @@ import 'dart:io';
 
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
-import 'package:wisetrack_app/data/services/UserCacheService.dart';
-import 'package:wisetrack_app/data/services/notification_service.dart';
-import 'package:wisetrack_app/ui/color/app_colors.dart';
-import 'package:wisetrack_app/utils/NotificationCountService.dart';
+import 'package:Voltgo_app/data/services/UserCacheService.dart';
+import 'package:Voltgo_app/data/services/notification_service.dart';
+import 'package:Voltgo_app/ui/color/app_colors.dart';
+import 'package:Voltgo_app/utils/NotificationCountService.dart';
 
 import '../../data/models/User/UserDetail.dart';
 
@@ -61,18 +61,19 @@ class AppDrawer extends StatelessWidget {
                     title: 'Auditorías',
                     routeName: '/auditoria',
                   ),
-               _buildDrawerItem(
+                  _buildDrawerItem(
                     context: context,
                     icon: Icons.notifications,
                     title: 'Notificaciones',
                     routeName: '/notifications',
                     // Envuelve el badge en un ValueListenableBuilder
                     trailing: ValueListenableBuilder<int>(
-                      valueListenable: NotificationCountService.unreadCountNotifier,
+                      valueListenable:
+                          NotificationCountService.unreadCountNotifier,
                       builder: (context, unreadCount, child) {
                         // Si no hay notificaciones no leídas, no muestra nada.
                         if (unreadCount == 0) {
-                          return const SizedBox.shrink(); 
+                          return const SizedBox.shrink();
                         }
                         // Si hay, muestra el badge con el conteo actualizado.
                         return _buildNotificationBadge(unreadCount.toString());
@@ -85,8 +86,6 @@ class AppDrawer extends StatelessWidget {
                     title: 'Configuraciones',
                     routeName: '/settings',
                   ),
-                
-                
                 ],
               ),
             ),
@@ -240,7 +239,7 @@ class AppDrawer extends StatelessWidget {
           const SizedBox(height: 12),
           _footerLink('Soporte'),
           const SizedBox(height: 12),
-          _footerLink('Acerca de Wisetrack Protect'),
+          _footerLink('Acerca de Voltgo Protect'),
         ],
       ),
     );

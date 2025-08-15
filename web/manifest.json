@@ -1,6 +1,6 @@
 {
-    "name": "wisetrack_app",
-    "short_name": "wisetrack_app",
+    "name": "Voltgo_app",
+    "short_name": "Voltgo_app",
     "start_url": ".",
     "display": "standalone",
     "background_color": "#0175C2",

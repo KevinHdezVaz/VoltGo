@@ -1,20 +1,23 @@
 import 'package:flutter/material.dart';
-import 'package:wisetrack_app/data/services/auth_api_service.dart';
-import 'package:wisetrack_app/ui/color/app_colors.dart';
+import 'package:Voltgo_app/data/services/auth_api_service.dart';
+import 'package:Voltgo_app/ui/color/app_colors.dart';
 import 'dart:convert';
-import 'package:wisetrack_app/utils/AnimatedTruckProgress.dart'; // Importa el widget modificado
+import 'package:Voltgo_app/utils/AnimatedTruckProgress.dart'; // Importa el widget modificado
 
 class ResetPasswordScreenUpdated extends StatefulWidget {
   final String email;
-  const ResetPasswordScreenUpdated({Key? key, required this.email}) : super(key: key);
+  const ResetPasswordScreenUpdated({Key? key, required this.email})
+      : super(key: key);
 
   @override
-  _ResetPasswordScreenUpdatedState createState() => _ResetPasswordScreenUpdatedState();
+  _ResetPasswordScreenUpdatedState createState() =>
+      _ResetPasswordScreenUpdatedState();
 }
 
 enum PasswordStrength { none, weak, acceptable, secure }
 
-class _ResetPasswordScreenUpdatedState extends State<ResetPasswordScreenUpdated> with TickerProviderStateMixin {
+class _ResetPasswordScreenUpdatedState extends State<ResetPasswordScreenUpdated>
+    with TickerProviderStateMixin {
   final _passwordController = TextEditingController();
   final _confirmPasswordController = TextEditingController();
 
@@ -31,7 +34,7 @@ class _ResetPasswordScreenUpdatedState extends State<ResetPasswordScreenUpdated>
   bool _userHasTyped = false;
 
   PasswordStrength _strength = PasswordStrength.none;
-  
+
   // Controlador para la animación
   late AnimationController _animationController;
 
@@ -44,7 +47,8 @@ class _ResetPasswordScreenUpdatedState extends State<ResetPasswordScreenUpdated>
     // Inicializar el Animation Controller
     _animationController = AnimationController(
       vsync: this,
-      duration: const Duration(seconds: 2), // Duración de un ciclo completo de la animación
+      duration: const Duration(
+          seconds: 2), // Duración de un ciclo completo de la animación
     );
   }
 
@@ -130,16 +134,21 @@ class _ResetPasswordScreenUpdatedState extends State<ResetPasswordScreenUpdated>
       final response = await AuthService.setNewPassword(
         email: widget.email,
         newPass: base64Encode(utf8.encode(_passwordController.text)),
-        newPassCheck: base64Encode(utf8.encode(_confirmPasswordController.text)),
+        newPassCheck:
+            base64Encode(utf8.encode(_confirmPasswordController.text)),
       );
-      
+
       // Cuando la respuesta llega, detiene el bucle y anima el camión hasta el final
-      _animationController.forward(from: _animationController.value).whenCompleteOrCancel(() {
+      _animationController
+          .forward(from: _animationController.value)
+          .whenCompleteOrCancel(() {
         _animationController.stop();
 
         if (response.success) {
           ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(content: Text(response.message ?? 'Contraseña cambiada con éxito')),
+            SnackBar(
+                content:
+                    Text(response.message ?? 'Contraseña cambiada con éxito')),
           );
           // Asegúrate que el widget sigue montado antes de navegar
           if (mounted) {
@@ -147,11 +156,11 @@ class _ResetPasswordScreenUpdatedState extends State<ResetPasswordScreenUpdated>
           }
         } else {
           setState(() {
-            _errorMessage = response.message ?? 'Error al cambiar la contraseña';
+            _errorMessage =
+                response.message ?? 'Error al cambiar la contraseña';
           });
         }
       });
-
     } catch (e) {
       _animationController.stop();
       setState(() {
@@ -165,7 +174,8 @@ class _ResetPasswordScreenUpdatedState extends State<ResetPasswordScreenUpdated>
         setState(() {
           _isLoading = false;
         });
-        _animationController.reset(); // Resetea la animación para la próxima vez
+        _animationController
+            .reset(); // Resetea la animación para la próxima vez
       }
     }
   }
@@ -229,7 +239,7 @@ class _ResetPasswordScreenUpdatedState extends State<ResetPasswordScreenUpdated>
   // --- El resto de tus widgets (_buildBackButton, _buildStrengthIndicator, etc.) no necesitan cambios ---
   // --- Puedes copiarlos y pegarlos tal cual los tenías ---
 
-   Widget _buildBackButton(BuildContext context) {
+  Widget _buildBackButton(BuildContext context) {
     return GestureDetector(
       onTap: () {
         try {

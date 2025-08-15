@@ -2,9 +2,9 @@ import 'dart:convert';
 import 'package:flutter/foundation.dart';
 import 'package:http/http.dart' as http;
 
-import 'package:wisetrack_app/data/models/vehicles/VehiclePositionModel.dart';
-import 'package:wisetrack_app/utils/TokenStorage.dart';
-import 'package:wisetrack_app/utils/constants.dart';
+import 'package:Voltgo_app/data/models/vehicles/VehiclePositionModel.dart';
+import 'package:Voltgo_app/utils/TokenStorage.dart';
+import 'package:Voltgo_app/utils/constants.dart';
 
 class VehiclePositionService {
   static Future<Map<String, String>> _getAuthHeaders() async {
