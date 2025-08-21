@@ -10,6 +10,7 @@ class DefaultFirebaseOptions {
         'DefaultFirebaseOptions have not been configured for web.',
       );
     }
+    //
     switch (defaultTargetPlatform) {
       case TargetPlatform.android:
         return FirebaseOptions(
