@@ -9,9 +9,9 @@ import 'package:open_file_plus/open_file_plus.dart';
 import 'package:path_provider/path_provider.dart';
 import 'package:pdf/pdf.dart';
 import 'package:pdf/widgets.dart' as pw;
-import 'package:Voltgo_app/data/models/BarChartDataModel.dart';
-import 'package:Voltgo_app/data/models/dashboard/DashboardDetailModel.dart';
-import 'package:Voltgo_app/data/models/vehicles/VehicleHistoryPoint.dart'; // Asegúrate de que esta importación sea correcta
+import 'package:Voltgo_User/data/models/BarChartDataModel.dart';
+import 'package:Voltgo_User/data/models/dashboard/DashboardDetailModel.dart';
+import 'package:Voltgo_User/data/models/vehicles/VehicleHistoryPoint.dart'; // Asegúrate de que esta importación sea correcta
 import 'package:image/image.dart' as img; // Importa el paquete image
 
 class PdfReportGenerator {

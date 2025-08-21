@@ -1,10 +1,10 @@
 import 'package:flutter/material.dart';
 import 'package:dropdown_button2/dropdown_button2.dart';
-import 'package:Voltgo_app/data/models/vehicles/Vehicle.dart';
-import 'package:Voltgo_app/data/services/vehicles_service.dart';
-import 'package:Voltgo_app/ui/MenuPage/moviles/SuccessDialog.dart';
-import 'package:Voltgo_app/ui/color/app_colors.dart';
-import 'package:Voltgo_app/utils/AnimatedTruckProgress.dart';
+import 'package:Voltgo_User/data/models/vehicles/Vehicle.dart';
+import 'package:Voltgo_User/data/services/vehicles_service.dart';
+import 'package:Voltgo_User/ui/MenuPage/moviles/SuccessDialog.dart';
+import 'package:Voltgo_User/ui/color/app_colors.dart';
+import 'package:Voltgo_User/utils/AnimatedTruckProgress.dart';
 
 class EditMobileScreen extends StatefulWidget {
   final String plate;

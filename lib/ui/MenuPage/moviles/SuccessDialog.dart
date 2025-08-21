@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import 'package:Voltgo_app/ui/color/app_colors.dart';
+import 'package:Voltgo_User/ui/color/app_colors.dart';
 
 class SuccessDialog extends StatelessWidget {
   const SuccessDialog({Key? key}) : super(key: key);

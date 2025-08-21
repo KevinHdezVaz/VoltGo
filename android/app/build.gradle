@@ -6,7 +6,7 @@ plugins {
 }
 
 android {
-    namespace = "us.voltgo.app"
+    namespace = "us.voltgoUser.appc"
     compileSdk = flutter.compileSdkVersion
     ndkVersion = flutter.ndkVersion
 
@@ -20,7 +20,7 @@ android {
     }
 
     defaultConfig {
-        applicationId = "us.voltgo.app"
+        applicationId = "us.voltgoUser.appc"
         minSdk = flutter.minSdkVersion
         targetSdk = flutter.targetSdkVersion
         versionCode = flutter.versionCode

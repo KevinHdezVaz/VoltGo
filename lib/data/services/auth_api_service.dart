@@ -1,117 +1,157 @@
 import 'dart:convert';
+import 'package:Voltgo_User/data/models/User/user_model.dart';
 import 'package:http/http.dart' as http;
-import 'package:Voltgo_app/data/models/LOGIN/ResetPasswordModel.dart';
-import 'package:Voltgo_app/data/models/LOGIN/login_request_model.dart';
-import 'package:Voltgo_app/data/models/LOGIN/logout_response.dart'; // Asegúrate que esta es la ruta correcta a tu nuevo modelo
-import 'package:Voltgo_app/data/services/UserCacheService.dart';
-import 'package:Voltgo_app/utils/TokenStorage.dart';
-import 'package:Voltgo_app/utils/constants.dart';
+import 'package:Voltgo_User/data/models/LOGIN/ResetPasswordModel.dart';
+import 'package:Voltgo_User/data/models/LOGIN/login_request_model.dart';
+import 'package:Voltgo_User/data/models/LOGIN/logout_response.dart'; // Asegúrate que esta es la ruta correcta a tu nuevo modelo
+import 'package:Voltgo_User/data/services/UserCacheService.dart';
+import 'package:Voltgo_User/utils/TokenStorage.dart';
+import 'package:Voltgo_User/utils/constants.dart';
 
 class AuthService {
   static Future<LoginResponse> login({
-    required String username,
+    required String email,
     required String password,
-    required String company,
   }) async {
-    final url = Uri.parse('${Constants.baseUrl}/user-login');
+    final url = Uri.parse('${Constants.baseUrl}/login');
     final body = LoginRequest(
-      username: username,
+      email: email,
       password: password,
-      company: company,
     ).toJson();
-
-    print('Intentando login - URL: $url');
-    print('Cuerpo de la solicitud: $body');
-
-    try {
-      final response = await http.post(
-        url,
-        headers: {'Content-Type': 'application/json'},
-        body: jsonEncode(body),
-      );
-
-      print('Respuesta recibida - Status Code: ${response.statusCode}');
-      print('Cuerpo de la respuesta: ${response.body}');
-
-      if (response.statusCode == 200) {
-        final loginResponse = LoginResponse.fromJson(jsonDecode(response.body));
-        print('Login exitoso - Token: ${loginResponse.token}');
-
-        if (loginResponse.token.isNotEmpty) {
-          await TokenStorage.saveToken(loginResponse.token);
-          print('Token guardado exitosamente en TokenStorage');
-        }
-
-        return loginResponse;
-      } else {
-        final errorMsg = 'Error: ${response.statusCode} - ${response.body}';
-        print('Error en login: $errorMsg');
-        return LoginResponse(
-          token: '',
-          error: errorMsg,
-        );
-      }
-    } catch (e) {
-      print('Excepción en login: $e');
-      return LoginResponse(
-        token: '',
-        error: 'Exception: $e',
-      );
-    }
-  }
-
-  static Future<LogoutResponse> logout() async {
-    final token = await TokenStorage.getToken();
-    print('Intentando logout - Token obtenido: $token');
-
-    // Si no hay token, no hay nada que hacer en el servidor, pero sí podemos limpiar la caché local
-    if (token == null) {
-      print('No hay token almacenado. Limpiando caché local por si acaso.');
-      await TokenStorage.deleteToken();
-      await UserCacheService.clearUserData(); // <--- AÑADIDO AQUÍ
-      return LogoutResponse(
-        detail: 'No hay token almacenado',
-      );
-    }
-
-    final url = Uri.parse('${Constants.baseUrl}/user-logout');
-    print('URL de logout: $url');
 
     try {
       final response = await http.post(
         url,
         headers: {
           'Content-Type': 'application/json',
-          'Authorization': 'Token $token',
+          'Accept': 'application/json'
+        },
+        body: jsonEncode(body),
+      );
+
+      if (response.statusCode == 200) {
+        final loginResponse = LoginResponse.fromJson(jsonDecode(response.body));
+        if (loginResponse.token.isNotEmpty) {
+          await TokenStorage.saveToken(loginResponse.token);
+        }
+        return loginResponse;
+      } else {
+        String errorMessage = 'Credenciales inválidas.';
+        try {
+          errorMessage = jsonDecode(response.body)['message'] ?? errorMessage;
+        } catch (e) {/* Ignora errores de parseo */}
+        return LoginResponse(token: '', error: errorMessage);
+      }
+    } catch (e) {
+      return LoginResponse(token: '', error: 'Error de conexión: $e');
+    }
+  }
+
+  static Future<RegisterResponse> register({
+    required String name,
+    required String email,
+    required String password,
+    String? phone,
+    required String userType,
+  }) async {
+    final url = Uri.parse('${Constants.baseUrl}/register');
+    final body = {
+      'name': name,
+      'email': email,
+      'password': password,
+      'user_type': userType,
+      if (phone != null) 'phone': phone,
+    };
+
+    try {
+      final response = await http.post(
+        url,
+        headers: {
+          'Content-Type': 'application/json',
+          'Accept': 'application/json'
+        },
+        body: jsonEncode(body),
+      );
+
+      if (response.statusCode == 201) {
+        // Esta línea ahora procesará el 'user' gracias al factory actualizado
+        return RegisterResponse.fromJson(jsonDecode(response.body));
+      } else {
+        String errorMessage = 'Error en el registro.';
+        try {
+          final jsonResponse = jsonDecode(response.body);
+          errorMessage = jsonResponse['errors']?.values?.first[0] ??
+              jsonResponse['message'] ??
+              errorMessage;
+        } catch (e) {/* Ignora errores de parseo */}
+        return RegisterResponse(success: false, error: errorMessage);
+      }
+    } catch (e) {
+      return RegisterResponse(success: false, error: 'Error de conexión: $e');
+    }
+  }
+
+  static Future<UserModel?> fetchUserProfile() async {
+    final token = await TokenStorage.getToken();
+    if (token == null) {
+      print('No token found, cannot fetch profile.');
+      return null;
+    }
+
+    final url = Uri.parse('${Constants.baseUrl}/profile');
+    try {
+      final response = await http.get(
+        url,
+        headers: {
+          'Accept': 'application/json',
+          'Authorization': 'Bearer $token',
         },
       );
 
-      print('Respuesta recibida - Status Code: ${response.statusCode}');
-      print('Cuerpo de la respuesta: ${response.body}');
-
-      // Limpia los datos locales SIN IMPORTAR la respuesta del servidor
-      await TokenStorage.deleteToken();
-      print('Token eliminado de TokenStorage');
-      await UserCacheService.clearUserData(); // <--- AÑADIDO AQUÍ
-      print('Datos de usuario eliminados de UserCacheService');
-
       if (response.statusCode == 200) {
-        return LogoutResponse.fromJson(jsonDecode(response.body));
+        // La API devuelve el objeto de usuario directamente
+        return UserModel.fromJson(jsonDecode(response.body));
       } else {
-        final errorMsg = 'Error: ${response.statusCode} - ${response.body}';
-        print('Error en logout: $errorMsg');
-        return LogoutResponse(
-          detail: errorMsg,
-        );
+        // Si el token es inválido o hay otro error, devolvemos null
+        print('Failed to fetch profile: ${response.body}');
+        return null;
       }
     } catch (e) {
-      // Si hay una excepción (ej. sin internet), también limpiamos los datos locales
+      print('Exception while fetching profile: $e');
+      return null;
+    }
+  }
+
+// En tu archivo data/services/auth_api_service.dart
+
+  static Future<void> logout() async {
+    // Changed to Future<void> for simplicity
+    final token = await TokenStorage.getToken();
+    if (token == null) {
       await TokenStorage.deleteToken();
-      await UserCacheService.clearUserData(); // <--- AÑADIDO AQUÍ TAMBIÉN
-      print('Excepción en logout: $e. Limpiando datos locales.');
-      return LogoutResponse(
-        detail: 'Exception: $e',
+      await UserCacheService.clearUserData();
+      return;
+    }
+
+    final url = Uri.parse('${Constants.baseUrl}/logout');
+    print('URL de logout: $url');
+
+    try {
+      await http.post(
+        url,
+        headers: {
+          'Content-Type': 'application/json',
+          'Accept': 'application/json', // <-- La cabecera clave
+          'Authorization': 'Bearer $token', // <-- Asegúrate de que sea 'Bearer'
+        },
       );
+    } catch (e) {
+      print('Exception during logout request: $e');
+    } finally {
+      // Limpia los datos locales SIN IMPORTAR la respuesta del servidor
+      await TokenStorage.deleteToken();
+      await UserCacheService.clearUserData();
+      print('Local user data and token cleared.');
     }
   }
 
@@ -122,9 +162,7 @@ class AuthService {
   }
 
   static Future<bool> isLoggedIn() async {
-    final hasToken = await TokenStorage.hasToken();
-    print('Verificando si está logueado: $hasToken');
-    return hasToken;
+    return await TokenStorage.hasToken();
   }
 
   static Future<PasswordResetResponse> requestPasswordReset(
@@ -271,5 +309,22 @@ class AuthService {
         message: 'Error de conexión: $e',
       );
     }
+  }
+}
+
+class RegisterResponse {
+  final bool success;
+  final String? token;
+  final UserModel? user; // Ahora contiene el objeto UserModel
+  final String? error;
+
+  RegisterResponse({required this.success, this.token, this.user, this.error});
+
+  factory RegisterResponse.fromJson(Map<String, dynamic> json) {
+    return RegisterResponse(
+      success: true,
+      token: json['token'],
+      user: json['user'] != null ? UserModel.fromJson(json['user']) : null,
+    );
   }
 }

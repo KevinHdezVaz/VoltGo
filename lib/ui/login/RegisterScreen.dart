@@ -1,9 +1,14 @@
+import 'package:Voltgo_User/data/models/User/user_model.dart';
+import 'package:Voltgo_User/ui/login/add_vehicle_screen.dart';
+import 'package:Voltgo_User/utils/TokenStorage.dart';
+import 'package:Voltgo_User/utils/bottom_nav.dart';
 import 'package:flutter/material.dart';
-import 'package:Voltgo_app/data/services/auth_api_service.dart';
-import 'package:Voltgo_app/ui/color/app_colors.dart';
-import 'package:Voltgo_app/ui/login/LoginScreen.dart';
-import 'package:Voltgo_app/utils/AnimatedTruckProgress.dart';
-import 'package:Voltgo_app/utils/encryption_utils.dart';
+import 'package:Voltgo_User/data/services/auth_api_service.dart';
+import 'package:Voltgo_User/ui/color/app_colors.dart';
+import 'package:Voltgo_User/ui/login/LoginScreen.dart';
+import 'package:Voltgo_User/utils/AnimatedTruckProgress.dart';
+import 'package:Voltgo_User/utils/encryption_utils.dart';
+import 'package:intl_phone_field/intl_phone_field.dart';
 
 class RegisterScreen extends StatefulWidget {
   const RegisterScreen({Key? key}) : super(key: key);
@@ -15,10 +20,14 @@ class RegisterScreen extends StatefulWidget {
 class _RegisterScreenState extends State<RegisterScreen>
     with SingleTickerProviderStateMixin {
   final _nameController = TextEditingController();
+  final _phoneController =
+      TextEditingController(); // Controlador para el número
+
   final _emailController = TextEditingController();
   final _companyController = TextEditingController();
   final _passwordController = TextEditingController();
   final _confirmPasswordController = TextEditingController();
+  String? _fullPhoneNumber; // Para guardar LADA + NÚMERO
 
   bool _isPasswordVisible = false;
   bool _isConfirmPasswordVisible = false;
@@ -26,12 +35,14 @@ class _RegisterScreenState extends State<RegisterScreen>
   bool _isLoading = false;
   late AnimationController _animationController;
 
+  // En _RegisterScreenState
   @override
   void initState() {
     super.initState();
     _nameController.addListener(_updateButtonState);
     _emailController.addListener(_updateButtonState);
-    _companyController.addListener(_updateButtonState);
+    _phoneController.addListener(_updateButtonState); // <-- AÑADE ESTA LÍNEA
+    // _companyController.addListener(_updateButtonState); // <-- PUEDES BORRAR ESTA
     _passwordController.addListener(_updateButtonState);
     _confirmPasswordController.addListener(_updateButtonState);
     _animationController =
@@ -49,11 +60,12 @@ class _RegisterScreenState extends State<RegisterScreen>
     super.dispose();
   }
 
+  // En _RegisterScreenState
   void _updateButtonState() {
     setState(() {
       _isButtonEnabled = _nameController.text.trim().isNotEmpty &&
           _emailController.text.trim().isNotEmpty &&
-          _companyController.text.trim().isNotEmpty &&
+          _phoneController.text.trim().isNotEmpty && // <-- CAMBIA ESTA LÍNEA
           _passwordController.text.trim().isNotEmpty &&
           _confirmPasswordController.text.trim().isNotEmpty &&
           (_passwordController.text.trim() ==
@@ -63,42 +75,71 @@ class _RegisterScreenState extends State<RegisterScreen>
 
   Future<void> _register() async {
     if (!_isButtonEnabled || _isLoading) return;
-    if (_passwordController.text.trim() !=
-        _confirmPasswordController.text.trim()) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Las contraseñas no coinciden.')),
-      );
-      return;
-    }
     setState(() => _isLoading = true);
     _animationController.repeat();
+
     try {
-      final base64Password =
-          EncryptionUtils.toBase64(_passwordController.text.trim());
-      // Lógica de API...
-      await Future.delayed(const Duration(seconds: 3)); // Simulación
+      final response = await AuthService.register(
+        name: _nameController.text.trim(),
+        email: _emailController.text.trim(),
+        password: _passwordController.text.trim(),
+        phone: _fullPhoneNumber,
+        userType: 'user',
+      );
+
       _animationController.stop();
       if (!mounted) return;
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text('¡Registro exitoso! Por favor, inicia sesión.'),
-          backgroundColor: Colors.green,
-        ),
-      );
-      Navigator.pushAndRemoveUntil(
-        context,
-        MaterialPageRoute(builder: (context) => const LoginScreen()),
-        (Route<dynamic> route) => false,
-      );
-    } catch (e) {
-      if (mounted) {
-        _animationController.stop();
+
+      if (response.success && response.token != null && response.user != null) {
+        await TokenStorage.saveToken(response.token!);
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Error en el registro: ${e.toString()}')),
+          const SnackBar(
+            content: Text('¡Bienvenido! Registro exitoso.'),
+            backgroundColor: Colors.green,
+          ),
+        );
+        // Llama a la función de navegación
+        _navigateAfterAuth(response.user!);
+      } else {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text(response.error ?? 'Ocurrió un error')),
         );
       }
+    } catch (e) {
+      // ... tu manejo de errores
     } finally {
       if (mounted) setState(() => _isLoading = false);
+    }
+  }
+
+// Añade esta función dentro de tu _RegisterScreenState y _LoginScreenState
+
+  void _navigateAfterAuth(UserModel user) {
+    if (user.hasRegisteredVehicle) {
+      // Si ya tiene vehículo, va a la pantalla principal
+      Navigator.pushAndRemoveUntil(
+        context,
+        MaterialPageRoute(builder: (context) => const BottomNavBar()),
+        (route) => false,
+      );
+    } else {
+      // Si NO tiene vehículo, muestra la pantalla de registro de vehículo
+      Navigator.pushAndRemoveUntil(
+        context,
+        MaterialPageRoute(
+          builder: (context) => AddVehicleScreen(
+            onVehicleAdded: () {
+              // Este callback se ejecuta cuando el usuario guarda el vehículo
+              Navigator.pushAndRemoveUntil(
+                context,
+                MaterialPageRoute(builder: (context) => const BottomNavBar()),
+                (route) => false,
+              );
+            },
+          ),
+        ),
+        (route) => false,
+      );
     }
   }
 
@@ -190,6 +231,47 @@ class _RegisterScreenState extends State<RegisterScreen>
     );
   }
 
+  // En _RegisterScreenState, añade este nuevo método
+  Widget _buildPhoneField() {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        const Text('Teléfono móvil',
+            style: TextStyle(
+                fontWeight: FontWeight.bold,
+                fontSize: 16,
+                color: AppColors.textPrimary)),
+        const SizedBox(height: 8),
+        IntlPhoneField(
+          controller: _phoneController,
+          decoration: InputDecoration(
+            hintText: 'Número de teléfono',
+            filled: true,
+            fillColor: AppColors.lightGrey.withOpacity(0.5),
+            border: OutlineInputBorder(
+                borderRadius: BorderRadius.circular(12.0),
+                borderSide: BorderSide(color: AppColors.gray300)),
+            enabledBorder: OutlineInputBorder(
+                borderRadius: BorderRadius.circular(12.0),
+                borderSide: BorderSide(color: AppColors.gray300)),
+            focusedBorder: OutlineInputBorder(
+                borderRadius: BorderRadius.circular(12.0),
+                borderSide:
+                    const BorderSide(color: AppColors.brandBlue, width: 1.5)),
+          ),
+          initialCountryCode: 'MX', // Código de país inicial (ej. México)
+          onChanged: (phone) {
+            // phone.completeNumber contiene la lada + el número (ej. +525512345678)
+            setState(() {
+              _fullPhoneNumber = phone.completeNumber;
+            });
+            _updateButtonState(); // Actualiza el estado del botón
+          },
+        ),
+      ],
+    );
+  }
+
   // ▼▼▼ NUEVO: Helper para crear botones de login social genéricos ▼▼▼
   Widget _buildSocialButton({
     required String assetName,
@@ -259,6 +341,10 @@ class _RegisterScreenState extends State<RegisterScreen>
             controller: _emailController,
             keyboardType: TextInputType.emailAddress),
         const SizedBox(height: 20),
+        _buildPhoneField(), // <-- AÑADE EL NUEVO CAMPO AQUÍ
+
+        const SizedBox(height: 20),
+
         _buildPasswordField(
             label: 'Contraseña',
             controller: _passwordController,
@@ -325,15 +411,6 @@ class _RegisterScreenState extends State<RegisterScreen>
               colorBlendMode:
                   BlendMode.srcIn, // Aplica el color sobre la imagen
               fit: BoxFit.contain)),
-      Positioned(
-          bottom: 0,
-          left: 0,
-          child: Image.asset('assets/images/rectangle3.png',
-              color: AppColors.primary, // Color que quieras aplicar
-              colorBlendMode:
-                  BlendMode.srcIn, // Aplica el color sobre la imagen
-              width: MediaQuery.of(context).size.width * 0.5,
-              fit: BoxFit.contain))
     ]);
   }
 

@@ -2,10 +2,10 @@ import 'dart:io';
 
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
-import 'package:Voltgo_app/data/services/UserCacheService.dart';
-import 'package:Voltgo_app/data/services/notification_service.dart';
-import 'package:Voltgo_app/ui/color/app_colors.dart';
-import 'package:Voltgo_app/utils/NotificationCountService.dart';
+import 'package:Voltgo_User/data/services/UserCacheService.dart';
+import 'package:Voltgo_User/data/services/notification_service.dart';
+import 'package:Voltgo_User/ui/color/app_colors.dart';
+import 'package:Voltgo_User/utils/NotificationCountService.dart';
 
 import '../../data/models/User/UserDetail.dart';
 

@@ -2,12 +2,12 @@ import 'dart:convert';
 import 'package:flutter/foundation.dart'; // Import for debugPrint
 import 'package:http/http.dart' as http;
 import 'package:intl/intl.dart';
-import 'package:Voltgo_app/data/models/vehicles/Vehicle.dart'; // Importa tus modelos de Vehicle
-import 'package:Voltgo_app/data/models/vehicles/VehicleAccesories.dart';
-import 'package:Voltgo_app/data/models/vehicles/VehicleDetail.dart';
-import 'package:Voltgo_app/data/models/vehicles/VehicleHistoryPoint.dart';
-import 'package:Voltgo_app/utils/TokenStorage.dart';
-import 'package:Voltgo_app/utils/constants.dart'; // Tu clase TokenStorage
+import 'package:Voltgo_User/data/models/vehicles/Vehicle.dart'; // Importa tus modelos de Vehicle
+import 'package:Voltgo_User/data/models/vehicles/VehicleAccesories.dart';
+import 'package:Voltgo_User/data/models/vehicles/VehicleDetail.dart';
+import 'package:Voltgo_User/data/models/vehicles/VehicleHistoryPoint.dart';
+import 'package:Voltgo_User/utils/TokenStorage.dart';
+import 'package:Voltgo_User/utils/constants.dart'; // Tu clase TokenStorage
 
 class VehicleService {
   static Future<Map<String, String>> _getAuthHeaders() async {
@@ -19,6 +19,41 @@ class VehicleService {
       'Content-Type': 'application/json',
       'Accept': 'application/json',
     };
+  }
+
+  static Future<void> addVehicle({
+    required String make,
+    required String model,
+    required int year,
+    required String connectorType,
+  }) async {
+    final url = Uri.parse('${Constants.baseUrl}/vehicles');
+    final token = await TokenStorage.getToken();
+
+    if (token == null) {
+      throw Exception('No se encontró el token de autenticación');
+    }
+
+    final headers = {
+      'Content-Type': 'application/json',
+      'Accept': 'application/json',
+      'Authorization': 'Bearer $token',
+    };
+
+    final body = jsonEncode({
+      'make': make,
+      'model': model,
+      'year': year,
+      'connector_type': connectorType,
+    });
+
+    final response = await http.post(url, headers: headers, body: body);
+
+    // 201 Created es la respuesta correcta para un recurso creado
+    if (response.statusCode != 201) {
+      final errorData = jsonDecode(response.body);
+      throw Exception(errorData['message'] ?? 'Error al registrar el vehículo');
+    }
   }
 
   static Future<List<Vehicle>> getAllVehicles() async {

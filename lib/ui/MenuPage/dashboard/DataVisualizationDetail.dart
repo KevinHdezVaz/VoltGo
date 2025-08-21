@@ -1,13 +1,13 @@
 import 'dart:math';
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
-import 'package:Voltgo_app/data/models/BarChartDataModel.dart';
-import 'package:Voltgo_app/data/models/dashboard/DashboardDetailModel.dart';
-import 'package:Voltgo_app/data/services/DashboardService.dart';
-import 'package:Voltgo_app/ui/MenuPage/auditoria/CustomDatePickerDialog.dart';
-import 'package:Voltgo_app/ui/color/app_colors.dart';
-import 'package:Voltgo_app/utils/pdf_report_generator.dart';
-import 'package:Voltgo_app/utils/AnimatedTruckProgress.dart';
+import 'package:Voltgo_User/data/models/BarChartDataModel.dart';
+import 'package:Voltgo_User/data/models/dashboard/DashboardDetailModel.dart';
+import 'package:Voltgo_User/data/services/DashboardService.dart';
+import 'package:Voltgo_User/ui/MenuPage/auditoria/CustomDatePickerDialog.dart';
+import 'package:Voltgo_User/ui/color/app_colors.dart';
+import 'package:Voltgo_User/utils/pdf_report_generator.dart';
+import 'package:Voltgo_User/utils/AnimatedTruckProgress.dart';
 
 class DataVisualizationDetail extends StatefulWidget {
   final String title;

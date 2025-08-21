@@ -1,16 +1,16 @@
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 import 'package:geocoding/geocoding.dart';
-import 'package:Voltgo_app/data/models/vehicles/VehicleAccesories.dart';
-import 'package:Voltgo_app/data/models/vehicles/VehicleDetail.dart';
-import 'package:Voltgo_app/data/services/vehicles_service.dart';
-import 'package:Voltgo_app/ui/MenuPage/auditoria/AuditDetailsScreen.dart';
-import 'package:Voltgo_app/ui/MenuPage/auditoria/AuditoriaScreen.dart';
-import 'package:Voltgo_app/ui/MenuPage/moviles/EditMobileScreen.dart';
-import 'package:Voltgo_app/ui/MenuPage/moviles/MobilesScreen.dart';
-import 'package:Voltgo_app/ui/MenuPage/moviles/SecurityActionsScreen.dart';
-import 'package:Voltgo_app/ui/color/app_colors.dart';
-import 'package:Voltgo_app/utils/AnimatedTruckProgress.dart';
+import 'package:Voltgo_User/data/models/vehicles/VehicleAccesories.dart';
+import 'package:Voltgo_User/data/models/vehicles/VehicleDetail.dart';
+import 'package:Voltgo_User/data/services/vehicles_service.dart';
+import 'package:Voltgo_User/ui/MenuPage/auditoria/AuditDetailsScreen.dart';
+import 'package:Voltgo_User/ui/MenuPage/auditoria/AuditoriaScreen.dart';
+import 'package:Voltgo_User/ui/MenuPage/moviles/EditMobileScreen.dart';
+import 'package:Voltgo_User/ui/MenuPage/moviles/MobilesScreen.dart';
+import 'package:Voltgo_User/ui/MenuPage/moviles/SecurityActionsScreen.dart';
+import 'package:Voltgo_User/ui/color/app_colors.dart';
+import 'package:Voltgo_User/utils/AnimatedTruckProgress.dart';
 
 class VehicleDetailScreen extends StatefulWidget {
   final String plate;

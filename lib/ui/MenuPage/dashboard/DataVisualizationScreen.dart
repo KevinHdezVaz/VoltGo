@@ -1,10 +1,10 @@
 import 'package:flutter/material.dart';
 import 'dart:math';
-import 'package:Voltgo_app/data/models/BarChartDataModel.dart';
-import 'package:Voltgo_app/data/models/dashboard/DashboardData.dart';
-import 'package:Voltgo_app/data/services/DashboardService.dart';
-import 'package:Voltgo_app/ui/MenuPage/dashboard/DataVisualizationDetail.dart';
-import 'package:Voltgo_app/ui/color/app_colors.dart';
+import 'package:Voltgo_User/data/models/BarChartDataModel.dart';
+import 'package:Voltgo_User/data/models/dashboard/DashboardData.dart';
+import 'package:Voltgo_User/data/services/DashboardService.dart';
+import 'package:Voltgo_User/ui/MenuPage/dashboard/DataVisualizationDetail.dart';
+import 'package:Voltgo_User/ui/color/app_colors.dart';
 
 class DataVisualizationScreen extends StatefulWidget {
   const DataVisualizationScreen({Key? key}) : super(key: key);

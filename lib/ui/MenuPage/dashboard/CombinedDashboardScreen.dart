@@ -1,11 +1,11 @@
 import 'package:flutter/material.dart';
 import 'package:intl/date_symbol_data_local.dart';
 import 'package:intl/intl.dart';
-import 'package:Voltgo_app/data/models/dashboard/BalanceResponse.dart';
-import 'package:Voltgo_app/data/models/dashboard/DashboardData.dart';
-import 'package:Voltgo_app/data/services/DashboardService.dart';
-import 'package:Voltgo_app/ui/MenuPage/dashboard/BalanceScreen.dart';
-import 'package:Voltgo_app/ui/MenuPage/dashboard/DataVisualizationScreen.dart';
+import 'package:Voltgo_User/data/models/dashboard/BalanceResponse.dart';
+import 'package:Voltgo_User/data/models/dashboard/DashboardData.dart';
+import 'package:Voltgo_User/data/services/DashboardService.dart';
+import 'package:Voltgo_User/ui/MenuPage/dashboard/BalanceScreen.dart';
+import 'package:Voltgo_User/ui/MenuPage/dashboard/DataVisualizationScreen.dart';
 
 class CombinedDashboardScreen extends StatefulWidget {
   const CombinedDashboardScreen({Key? key}) : super(key: key);

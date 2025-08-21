@@ -1,3 +1,4 @@
+import 'package:Voltgo_User/ui/color/app_colors.dart';
 import 'package:flutter/material.dart';
 import 'package:lottie/lottie.dart';
 
@@ -16,6 +17,7 @@ class OnboardingScreenOne extends StatelessWidget {
             'assets/images/rectangle1.png',
             width: MediaQuery.of(context).size.width * 0.5,
             fit: BoxFit.contain,
+            color: AppColors.primary, // Color que quieras aplicar
           ),
         ),
         Center(

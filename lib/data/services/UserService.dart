@@ -4,11 +4,11 @@ import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
 import 'package:path_provider/path_provider.dart'; // For temporary file storage
-import 'package:Voltgo_app/data/models/User/UserDetail.dart';
-import 'package:Voltgo_app/data/models/alert/NotificationPermissions.dart';
-import 'package:Voltgo_app/data/services/UserCacheService.dart';
-import 'package:Voltgo_app/utils/TokenStorage.dart';
-import 'package:Voltgo_app/utils/constants.dart';
+import 'package:Voltgo_User/data/models/User/UserDetail.dart';
+import 'package:Voltgo_User/data/models/alert/NotificationPermissions.dart';
+import 'package:Voltgo_User/data/services/UserCacheService.dart';
+import 'package:Voltgo_User/utils/TokenStorage.dart';
+import 'package:Voltgo_User/utils/constants.dart';
 import 'package:http_parser/http_parser.dart';
 
 class Log {

@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
-import 'package:Voltgo_app/utils/Preferences.dart';
-import 'package:Voltgo_app/data/services/auth_api_service.dart';
-import 'package:Voltgo_app/utils/AnimatedTruckProgress.dart';
+import 'package:Voltgo_User/utils/Preferences.dart';
+import 'package:Voltgo_User/data/services/auth_api_service.dart';
+import 'package:Voltgo_User/utils/AnimatedTruckProgress.dart';
 
 class AuthWrapper extends StatefulWidget {
   const AuthWrapper({super.key});

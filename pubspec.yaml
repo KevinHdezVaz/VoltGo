@@ -1,4 +1,4 @@
-name: Voltgo_app
+name: Voltgo_User
 description: "A new Flutter project."
 publish_to: 'none'
 
@@ -25,6 +25,7 @@ dependencies:
   table_calendar: ^3.1.1 # Se actualizó a la versión más reciente
   fl_chart: ^0.68.0
   geolocator: ^12.0.0
+  animate_do: ^3.0.2
   permission_handler: ^11.3.1
   shared_preferences: ^2.2.3 # Se actualizó a la versión más reciente
   http: ^1.1.0
@@ -53,6 +54,7 @@ dependencies:
   image_picker: ^1.0.7  
   flutter_image_compress: ^2.4.0
   vibration: ^1.8.1
+  intl_phone_field: ^3.2.0
 
 dev_dependencies:
   flutter_test:

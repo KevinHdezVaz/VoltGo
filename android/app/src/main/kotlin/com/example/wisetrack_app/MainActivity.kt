@@ -1,4 +1,4 @@
-package us.voltgo.app
+package us.voltgoUser.appc
 
 import io.flutter.embedding.android.FlutterActivity
 

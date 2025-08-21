@@ -3,13 +3,13 @@ import 'package:flutter/material.dart';
 import 'package:flutter_image_compress/flutter_image_compress.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:permission_handler/permission_handler.dart';
-import 'package:Voltgo_app/data/models/User/UserDetail.dart';
-import 'package:Voltgo_app/data/services/UserCacheService.dart';
-import 'package:Voltgo_app/data/services/UserService.dart';
-import 'package:Voltgo_app/ui/color/app_colors.dart';
+import 'package:Voltgo_User/data/models/User/UserDetail.dart';
+import 'package:Voltgo_User/data/services/UserCacheService.dart';
+import 'package:Voltgo_User/data/services/UserService.dart';
+import 'package:Voltgo_User/ui/color/app_colors.dart';
 import 'package:path_provider/path_provider.dart';
 import 'package:path/path.dart' as p;
-import 'package:Voltgo_app/utils/AnimatedTruckProgress.dart';
+import 'package:Voltgo_User/utils/AnimatedTruckProgress.dart';
 
 class EditProfileScreen extends StatefulWidget {
   const EditProfileScreen({Key? key}) : super(key: key);

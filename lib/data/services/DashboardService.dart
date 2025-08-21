@@ -2,11 +2,11 @@ import 'dart:convert';
 import 'package:flutter/foundation.dart';
 import 'package:http/http.dart' as http;
 import 'package:intl/intl.dart';
-import 'package:Voltgo_app/data/models/dashboard/BalanceResponse.dart';
-import 'package:Voltgo_app/data/models/dashboard/DashboardData.dart'; // Importa el nuevo modelo
-import 'package:Voltgo_app/data/models/dashboard/DashboardDetailModel.dart';
-import 'package:Voltgo_app/utils/TokenStorage.dart';
-import 'package:Voltgo_app/utils/constants.dart';
+import 'package:Voltgo_User/data/models/dashboard/BalanceResponse.dart';
+import 'package:Voltgo_User/data/models/dashboard/DashboardData.dart'; // Importa el nuevo modelo
+import 'package:Voltgo_User/data/models/dashboard/DashboardDetailModel.dart';
+import 'package:Voltgo_User/utils/TokenStorage.dart';
+import 'package:Voltgo_User/utils/constants.dart';
 
 class DashboardService {
   static Future<Map<String, String>> _getAuthHeaders() async {

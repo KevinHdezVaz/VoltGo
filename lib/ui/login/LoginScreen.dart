@@ -1,13 +1,15 @@
 import 'dart:convert';
-import 'package:Voltgo_app/utils/bottom_nav.dart';
+import 'package:Voltgo_User/data/models/User/user_model.dart';
+import 'package:Voltgo_User/ui/login/add_vehicle_screen.dart';
+import 'package:Voltgo_User/utils/bottom_nav.dart';
 import 'package:flutter/material.dart';
-import 'package:Voltgo_app/data/services/auth_api_service.dart';
-import 'package:Voltgo_app/ui/MenuPage/DashboardScreen.dart';
-import 'package:Voltgo_app/ui/color/app_colors.dart';
-import 'package:Voltgo_app/ui/login/ForgotPasswordScreen.dart';
-import 'package:Voltgo_app/ui/login/RegisterScreen.dart';
-import 'package:Voltgo_app/utils/AnimatedTruckProgress.dart';
-import 'package:Voltgo_app/utils/encryption_utils.dart';
+import 'package:Voltgo_User/data/services/auth_api_service.dart';
+import 'package:Voltgo_User/ui/MenuPage/DashboardScreen.dart';
+import 'package:Voltgo_User/ui/color/app_colors.dart';
+import 'package:Voltgo_User/ui/login/ForgotPasswordScreen.dart';
+import 'package:Voltgo_User/ui/login/RegisterScreen.dart';
+import 'package:Voltgo_User/utils/AnimatedTruckProgress.dart';
+import 'package:Voltgo_User/utils/encryption_utils.dart';
 
 class LoginScreen extends StatefulWidget {
   const LoginScreen({Key? key}) : super(key: key);
@@ -19,9 +21,10 @@ class LoginScreen extends StatefulWidget {
 class _LoginScreenState extends State<LoginScreen>
     with SingleTickerProviderStateMixin {
   bool _isPasswordVisible = false;
-  final _usernameController = TextEditingController();
+  final _emailController =
+      TextEditingController(); // Antes se llamaba _usernameController
+
   final _passwordController = TextEditingController();
-  final _companyController = TextEditingController();
   bool _isButtonEnabled = false;
   bool _isLoading = false;
   late AnimationController _animationController;
@@ -29,27 +32,24 @@ class _LoginScreenState extends State<LoginScreen>
   @override
   void initState() {
     super.initState();
-    _usernameController.addListener(_updateButtonState);
+    _emailController.addListener(_updateButtonState); // Usa el nuevo nombre
+
     _passwordController.addListener(_updateButtonState);
-    _companyController.addListener(_updateButtonState);
     _animationController =
         AnimationController(vsync: this, duration: const Duration(seconds: 4));
   }
 
   @override
   void dispose() {
-    _usernameController.dispose();
     _passwordController.dispose();
-    _companyController.dispose();
     _animationController.dispose();
     super.dispose();
   }
 
   void _updateButtonState() {
     setState(() {
-      _isButtonEnabled = _usernameController.text.trim().isNotEmpty &&
-          _passwordController.text.trim().isNotEmpty &&
-          _companyController.text.trim().isNotEmpty;
+      _isButtonEnabled = _emailController.text.trim().isNotEmpty &&
+          _passwordController.text.trim().isNotEmpty;
     });
   }
 
@@ -60,29 +60,24 @@ class _LoginScreenState extends State<LoginScreen>
     _animationController.repeat();
 
     try {
-      final base64Password =
-          EncryptionUtils.toBase64(_passwordController.text.trim());
-
+      // La llamada a tu servicio ya guarda el token, ¡eso está perfecto!
       final loginResponse = await AuthService.login(
-        username: _usernameController.text.trim(),
-        password: base64Password,
-        company: _companyController.text.trim(),
+        email: _emailController.text.trim(), // <-- CAMBIA AQUÍ
+        password: _passwordController.text.trim(),
       );
+
       _animationController.stop();
       if (!mounted) return;
 
-      if (loginResponse.token.isNotEmpty) {
-        Navigator.pushReplacement(
-          context,
-          MaterialPageRoute(builder: (context) => const BottomNavBar()),
-        );
+      if (loginResponse.token.isNotEmpty && loginResponse.user != null) {
+        _navigateAfterAuth(loginResponse.user!);
+
+        // ▲▲▲ FIN DEL CAMBIO ▲▲▲
       } else {
-        // ... (Tu manejo de errores existente)
-        String errorMessage = 'Usuario, contraseña o empresa incorrectos';
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
-            content: Text(errorMessage),
-            duration: const Duration(seconds: 3),
+            content:
+                Text(loginResponse.error ?? 'Usuario o contraseña incorrectos'),
           ),
         );
       }
@@ -91,9 +86,7 @@ class _LoginScreenState extends State<LoginScreen>
         _animationController.stop();
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(
-            content:
-                Text('Error de conexión: No se pudo conectar con el servidor'),
-            duration: Duration(seconds: 3),
+            content: Text('Error de conexión con el servidor'),
           ),
         );
       }
@@ -101,6 +94,37 @@ class _LoginScreenState extends State<LoginScreen>
       if (mounted) {
         setState(() => _isLoading = false);
       }
+    }
+  }
+
+// Añade esta función dentro de tu _RegisterScreenState y _LoginScreenState
+
+  void _navigateAfterAuth(UserModel user) {
+    if (user.hasRegisteredVehicle) {
+      // Si ya tiene vehículo, va a la pantalla principal
+      Navigator.pushAndRemoveUntil(
+        context,
+        MaterialPageRoute(builder: (context) => const BottomNavBar()),
+        (route) => false,
+      );
+    } else {
+      // Si NO tiene vehículo, muestra la pantalla de registro de vehículo
+      Navigator.pushAndRemoveUntil(
+        context,
+        MaterialPageRoute(
+          builder: (context) => AddVehicleScreen(
+            onVehicleAdded: () {
+              // Este callback se ejecuta cuando el usuario guarda el vehículo
+              Navigator.pushAndRemoveUntil(
+                context,
+                MaterialPageRoute(builder: (context) => const BottomNavBar()),
+                (route) => false,
+              );
+            },
+          ),
+        ),
+        (route) => false,
+      );
     }
   }
 
@@ -230,17 +254,6 @@ class _LoginScreenState extends State<LoginScreen>
   Widget _buildBackground(BuildContext context) {
     return Stack(children: [
       Positioned(
-        top: 0,
-        right: -90,
-        child: Image.asset(
-          'assets/images/rectangle1.png',
-          width: MediaQuery.of(context).size.width * 0.5,
-          fit: BoxFit.contain,
-          color: AppColors.primary, // Color que quieras aplicar
-          colorBlendMode: BlendMode.srcIn, // Aplica el color sobre la imagen
-        ),
-      ),
-      Positioned(
         bottom: 0,
         left: 0,
         child: Image.asset(
@@ -283,7 +296,7 @@ class _LoginScreenState extends State<LoginScreen>
         _buildTextField(
           label: 'Correo electrónico',
           hint: 'Ingresa',
-          controller: _usernameController,
+          controller: _emailController, // <-- Usa el nuevo nombre
         ),
         const SizedBox(height: 20),
         _buildPasswordField(controller: _passwordController),

@@ -1,25 +1,26 @@
 import 'dart:io';
 
+import 'package:Voltgo_User/ui/login/AuthCheckScreen.dart';
 import 'package:flutter/material.dart';
 import 'package:firebase_core/firebase_core.dart';
 import 'package:firebase_messaging/firebase_messaging.dart'; // Importante
 import 'package:flutter_dotenv/flutter_dotenv.dart';
 import 'package:intl/date_symbol_data_local.dart';
-import 'package:Voltgo_app/firebase_options.dart';
-import 'package:Voltgo_app/ui/MenuPage/notifications/NotificationDetailScreen.dart';
-import 'package:Voltgo_app/ui/SplashScreen.dart';
-import 'package:Voltgo_app/utils/AuthWrapper.dart';
-import 'package:Voltgo_app/utils/NotificationCountService.dart';
+import 'package:Voltgo_User/firebase_options.dart';
+import 'package:Voltgo_User/ui/MenuPage/notifications/NotificationDetailScreen.dart';
+import 'package:Voltgo_User/ui/SplashScreen.dart';
+import 'package:Voltgo_User/utils/AuthWrapper.dart';
+import 'package:Voltgo_User/utils/NotificationCountService.dart';
 
 // Importa tus pantallas
-import 'package:Voltgo_app/ui/IntroPage/OnboardingWrapper.dart';
-import 'package:Voltgo_app/ui/login/LoginScreen.dart';
-import 'package:Voltgo_app/ui/MenuPage/DashboardScreen.dart';
-import 'package:Voltgo_app/ui/MenuPage/dashboard/CombinedDashboardScreen.dart';
-import 'package:Voltgo_app/ui/MenuPage/moviles/MobilesScreen.dart';
-import 'package:Voltgo_app/ui/MenuPage/auditoria/AuditoriaScreen.dart';
-import 'package:Voltgo_app/ui/MenuPage/notifications/NotificationsScreen.dart';
-import 'package:Voltgo_app/ui/profile/SettingsScreen.dart';
+import 'package:Voltgo_User/ui/IntroPage/OnboardingWrapper.dart';
+import 'package:Voltgo_User/ui/login/LoginScreen.dart';
+import 'package:Voltgo_User/ui/MenuPage/DashboardScreen.dart';
+import 'package:Voltgo_User/ui/MenuPage/dashboard/CombinedDashboardScreen.dart';
+import 'package:Voltgo_User/ui/MenuPage/moviles/MobilesScreen.dart';
+import 'package:Voltgo_User/ui/MenuPage/auditoria/AuditoriaScreen.dart';
+import 'package:Voltgo_User/ui/MenuPage/notifications/NotificationsScreen.dart';
+import 'package:Voltgo_User/ui/profile/SettingsScreen.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 // Importa la pantalla de detalle de notificación
 
@@ -77,7 +78,7 @@ void main() async {
     // Aquí podrías mostrar una notificación local si lo deseas
   });
 
-  NotificationCountService.updateCount();
+  //NotificationCountService.updateCount();
 
   initializeDateFormatting('es_ES', null).then((_) {
     runApp(MyApp(onboardingCompleted: onboardingCompleted));
@@ -95,7 +96,6 @@ class MyApp extends StatelessWidget {
     return MaterialApp(
       title: 'Voltgo',
       debugShowCheckedModeBanner: false,
-      initialRoute: onboardingCompleted ? '/login' : '/onboarding',
 
       // Asigna la GlobalKey aquí
       navigatorKey: navigatorKey,
@@ -104,9 +104,11 @@ class MyApp extends StatelessWidget {
         useMaterial3: true,
         scaffoldBackgroundColor: Colors.grey[100],
       ),
-      // La pantalla inicial
-      home: const SplashScreen(),
-      // Reemplaza 'routes' con 'onGenerateRoute' para manejar argumentos
+
+      home: onboardingCompleted
+          ? const AuthCheckScreen()
+          : const OnboardingWrapper(),
+
       onGenerateRoute: (settings) {
         switch (settings.name) {
           case '/onboarding':
@@ -119,7 +121,7 @@ class MyApp extends StatelessWidget {
             return MaterialPageRoute(builder: (_) => const LoginScreen());
           case '/dashboard':
             return MaterialPageRoute(
-                builder: (_) => const DriverDashboardScreen());
+                builder: (_) => const PassengerMapScreen());
           case '/dashboard_combined':
             return MaterialPageRoute(
                 builder: (_) => const CombinedDashboardScreen());

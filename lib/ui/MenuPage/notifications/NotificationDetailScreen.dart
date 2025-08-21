@@ -2,10 +2,10 @@ import 'package:flutter/material.dart';
 import 'package:google_maps_flutter/google_maps_flutter.dart';
 import 'package:intl/intl.dart';
 import 'package:share_plus/share_plus.dart';
-import 'package:Voltgo_app/data/models/NotificationItem.dart' as model;
-import 'package:Voltgo_app/data/services/NotificationsService.dart';
-import 'package:Voltgo_app/ui/color/app_colors.dart';
-import 'package:Voltgo_app/utils/AnimatedTruckProgress.dart';
+import 'package:Voltgo_User/data/models/NotificationItem.dart' as model;
+import 'package:Voltgo_User/data/services/NotificationsService.dart';
+import 'package:Voltgo_User/ui/color/app_colors.dart';
+import 'package:Voltgo_User/utils/AnimatedTruckProgress.dart';
 
 class NotificationDetailScreen extends StatefulWidget {
   final int notificationId;

@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
-import 'package:Voltgo_app/data/models/vehicles/Vehicle.dart';
-import 'package:Voltgo_app/data/services/vehicles_service.dart';
-import 'package:Voltgo_app/ui/color/app_colors.dart';
+import 'package:Voltgo_User/data/models/vehicles/Vehicle.dart';
+import 'package:Voltgo_User/data/services/vehicles_service.dart';
+import 'package:Voltgo_User/ui/color/app_colors.dart';
 
 class FilterBottomSheet extends StatefulWidget {
   final Set<String> initialFilters;

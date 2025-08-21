@@ -1,5 +1,4 @@
 import 'dart:async';
-
 import 'package:geolocator/geolocator.dart';
 import 'package:google_maps_flutter/google_maps_flutter.dart';
 
@@ -42,6 +41,19 @@ class DashboardLogic {
       icon: BitmapDescriptor.defaultMarkerWithHue(BitmapDescriptor.hueAzure),
       infoWindow: const InfoWindow(title: 'Tu ubicación'),
     ));
+  }
+
+  void addDriverMarker(LatLng position, String driverId) {
+    markers.add(Marker(
+      markerId: MarkerId(driverId),
+      position: position,
+      icon: BitmapDescriptor.defaultMarkerWithHue(BitmapDescriptor.hueRed),
+      infoWindow: const InfoWindow(title: 'Cargador'),
+    ));
+  }
+
+  void removeDriverMarker(String driverId) {
+    markers.removeWhere((marker) => marker.markerId.value == driverId);
   }
 
   void dispose() {

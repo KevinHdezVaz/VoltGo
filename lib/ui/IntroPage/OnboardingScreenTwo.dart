@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import 'dart:math' as math;
-import 'package:Voltgo_app/ui/color/app_colors.dart';
+import 'package:Voltgo_User/ui/color/app_colors.dart';
 import 'package:lottie/lottie.dart';
 
 class OnboardingscreenTwo extends StatelessWidget {
@@ -10,10 +10,13 @@ class OnboardingscreenTwo extends StatelessWidget {
   Widget build(BuildContext context) {
     return Stack(
       children: [
-        _buildBackground(context),
+        // 1. Dibuja el contenido (Lottie y texto) para que esté en el fondo.
         Center(
           child: _buildContent(context),
         ),
+
+        // 2. Dibuja las imágenes de los rectángulos al final para que estén al frente.
+        _buildBackground(context),
       ],
     );
   }
@@ -23,7 +26,7 @@ class OnboardingscreenTwo extends StatelessWidget {
     return Stack(
       children: [
         Positioned(
-          bottom: 0,
+          bottom: -50,
           right: 0,
           child: Transform.rotate(
             angle: 0.0,
@@ -31,16 +34,18 @@ class OnboardingscreenTwo extends StatelessWidget {
               'assets/images/rectangle2_2.png',
               width: MediaQuery.of(context).size.width * 0.4,
               fit: BoxFit.contain,
+              color: AppColors.primary, // Color que quieras aplicar
             ),
           ),
         ),
         Positioned(
           top: 0,
-          left: 0,
+          left: -50,
           child: Image.asset(
             'assets/images/rectangle2.png',
-            width: MediaQuery.of(context).size.width * 0.55,
+            width: MediaQuery.of(context).size.width * 0.6,
             fit: BoxFit.contain,
+            color: AppColors.primary, // Color que quieras aplicar
           ),
         ),
       ],

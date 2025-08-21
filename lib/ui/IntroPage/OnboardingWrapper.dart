@@ -1,9 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:shared_preferences/shared_preferences.dart'; // <-- 1. IMPORTA EL PAQUETE
-import 'package:Voltgo_app/ui/IntroPage/OnboardingScreenOne.dart';
-import 'package:Voltgo_app/ui/IntroPage/OnboardingScreenThree.dart';
-import 'package:Voltgo_app/ui/IntroPage/OnboardingScreenTwo.dart';
-import 'package:Voltgo_app/ui/color/app_colors.dart';
+import 'package:Voltgo_User/ui/IntroPage/OnboardingScreenOne.dart';
+import 'package:Voltgo_User/ui/IntroPage/OnboardingScreenThree.dart';
+import 'package:Voltgo_User/ui/IntroPage/OnboardingScreenTwo.dart';
+import 'package:Voltgo_User/ui/color/app_colors.dart';
 
 class OnboardingWrapper extends StatefulWidget {
   const OnboardingWrapper({Key? key}) : super(key: key);

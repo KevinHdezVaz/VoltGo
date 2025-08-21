@@ -1,13 +1,13 @@
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
-import 'package:Voltgo_app/data/models/NotificationItem.dart' as model;
-import 'package:Voltgo_app/data/services/NotificationsService.dart';
-import 'package:Voltgo_app/data/models/alert/NotificationPermissions.dart';
-import 'package:Voltgo_app/ui/MenuPage/notifications/NotificationDetailScreen.dart';
-import 'package:Voltgo_app/ui/color/app_colors.dart';
-import 'package:Voltgo_app/utils/AnimatedTruckProgress.dart';
-import 'package:Voltgo_app/utils/NotificationCountService.dart';
-import 'package:Voltgo_app/utils/ReadStatusManager.dart';
+import 'package:Voltgo_User/data/models/NotificationItem.dart' as model;
+import 'package:Voltgo_User/data/services/NotificationsService.dart';
+import 'package:Voltgo_User/data/models/alert/NotificationPermissions.dart';
+import 'package:Voltgo_User/ui/MenuPage/notifications/NotificationDetailScreen.dart';
+import 'package:Voltgo_User/ui/color/app_colors.dart';
+import 'package:Voltgo_User/utils/AnimatedTruckProgress.dart';
+import 'package:Voltgo_User/utils/NotificationCountService.dart';
+import 'package:Voltgo_User/utils/ReadStatusManager.dart';
 
 class NotificationsScreen extends StatefulWidget {
   const NotificationsScreen({Key? key}) : super(key: key);

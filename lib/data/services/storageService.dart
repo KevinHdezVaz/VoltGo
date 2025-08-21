@@ -1,8 +1,7 @@
 import 'dart:convert';
 
- import 'package:Voltgo_app/data/models/User.dart';
+import 'package:Voltgo_User/data/models/User.dart';
 import 'package:shared_preferences/shared_preferences.dart';
- 
 
 class StorageService {
   static const String tokenKey = 'auth_token';

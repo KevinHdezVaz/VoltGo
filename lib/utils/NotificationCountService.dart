@@ -1,8 +1,8 @@
 import 'package:flutter/foundation.dart';
-import 'package:Voltgo_app/data/models/NotificationItem.dart';
-import 'package:Voltgo_app/data/models/alert/NotificationPermissions.dart';
-import 'package:Voltgo_app/data/services/NotificationsService.dart'; // Servicio de permisos
-import 'package:Voltgo_app/utils/ReadStatusManager.dart';
+import 'package:Voltgo_User/data/models/NotificationItem.dart';
+import 'package:Voltgo_User/data/models/alert/NotificationPermissions.dart';
+import 'package:Voltgo_User/data/services/NotificationsService.dart'; // Servicio de permisos
+import 'package:Voltgo_User/utils/ReadStatusManager.dart';
 
 /// Gestiona el estado del contador de notificaciones no leídas.
 class NotificationCountService {

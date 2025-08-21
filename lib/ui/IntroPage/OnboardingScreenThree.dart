@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import 'package:Voltgo_app/ui/color/app_colors.dart';
+import 'package:Voltgo_User/ui/color/app_colors.dart';
 import 'package:lottie/lottie.dart';
 
 class OnboardingscreenThree extends StatelessWidget {
@@ -9,10 +9,13 @@ class OnboardingscreenThree extends StatelessWidget {
   Widget build(BuildContext context) {
     return Stack(
       children: [
-        _buildBackground(context),
+        // 1. Dibuja el contenido (Lottie y texto) primero para que quede al fondo.
         Center(
           child: _buildContent(context),
         ),
+
+        // 2. Dibuja el fondo (imágenes de rectángulos) al final para que quede al frente.
+        _buildBackground(context),
       ],
     );
   }
@@ -28,15 +31,17 @@ class OnboardingscreenThree extends StatelessWidget {
             'assets/images/rectangle3.png',
             width: MediaQuery.of(context).size.width * 0.5,
             fit: BoxFit.contain,
+            color: AppColors.primary, // Color que quieras aplicar
           ),
         ),
         Positioned(
-          top: 0,
+          top: -90,
           right: 0,
           child: Image.asset(
             'assets/images/rectangle1.png',
             width: MediaQuery.of(context).size.width * 0.5,
             fit: BoxFit.contain,
+            color: AppColors.primary, // Color que quieras aplicar
           ),
         ),
       ],

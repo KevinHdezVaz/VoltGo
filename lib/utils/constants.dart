@@ -1,3 +1,3 @@
 class Constants {
-  static const String baseUrl = 'https://fleetmobile.Voltgo.cl';
+  static const String baseUrl = 'https://voltgo.aftconta.mx/api';
 }

@@ -1,99 +1,208 @@
 import 'dart:async';
-import 'package:Voltgo_app/data/logic/dashboard/DashboardLogic.dart';
+import 'package:Voltgo_User/data/logic/dashboard/DashboardLogic.dart';
+import 'package:Voltgo_User/data/models/User/ServiceRequestModel.dart';
+import 'package:Voltgo_User/data/services/ServiceRequestService.dart';
 import 'package:flutter/material.dart';
+import 'package:google_fonts/google_fonts.dart';
 import 'package:google_maps_flutter/google_maps_flutter.dart';
+import 'package:Voltgo_User/ui/color/app_colors.dart';
+import 'package:geolocator/geolocator.dart';
+import 'package:animate_do/animate_do.dart';
 
-// Enum para el estado del conductor
-enum DriverStatus { offline, online, incomingRequest, enRouteToUser, onService }
+enum PassengerStatus { idle, searching, driverAssigned, onTrip }
 
-class DriverDashboardScreen extends StatefulWidget {
-  const DriverDashboardScreen({super.key});
+class PassengerMapScreen extends StatefulWidget {
+  const PassengerMapScreen({super.key});
 
   @override
-  State<DriverDashboardScreen> createState() => _DriverDashboardScreenState();
+  State<PassengerMapScreen> createState() => _PassengerMapScreenState();
 }
 
-class _DriverDashboardScreenState extends State<DriverDashboardScreen> {
+class _PassengerMapScreenState extends State<PassengerMapScreen> {
   late final DashboardLogic _logic;
-  bool isLoading = true;
-
-  // Estado principal que controla la UI del conductor
-  DriverStatus _driverStatus = DriverStatus.offline;
+  bool _isLoading = true;
+  PassengerStatus _passengerStatus = PassengerStatus.idle;
+  Timer? _statusCheckTimer;
+  ServiceRequestModel? _activeRequest;
 
   @override
   void initState() {
     super.initState();
     _logic = DashboardLogic();
-    _initializeApp();
-  }
-
-  // ---- Simulación de una nueva solicitud ----
-  void _simulateIncomingRequest() {
-    if (_driverStatus == DriverStatus.online) {
-      setState(() {
-        _driverStatus = DriverStatus.incomingRequest;
-      });
-    }
+    _initializeMap();
   }
 
   @override
   void dispose() {
     _logic.dispose();
+    _statusCheckTimer?.cancel();
     super.dispose();
   }
 
-  Future<void> _initializeApp() async {
-    // La lógica de inicialización del mapa se mantiene igual
-    setState(() => isLoading = true);
+  Future<void> _initializeMap() async {
+    setState(() => _isLoading = true);
+
     try {
+      bool serviceEnabled = await Geolocator.isLocationServiceEnabled();
+      if (!serviceEnabled) {
+        _showErrorSnackbar('Por favor, activa los servicios de ubicación.');
+        return;
+      }
+
+      LocationPermission permission = await Geolocator.checkPermission();
+      if (permission == LocationPermission.denied) {
+        permission = await Geolocator.requestPermission();
+        if (permission != LocationPermission.whileInUse &&
+            permission != LocationPermission.always) {
+          _showErrorSnackbar('Permiso de ubicación denegado.');
+          return;
+        }
+      }
+
       final position = await _logic.getCurrentUserPosition();
       if (position != null) {
+        final userLocation = LatLng(position.latitude, position.longitude);
         setState(() {
           _logic.initialCameraPosition = CameraPosition(
-            target: LatLng(position.latitude, position.longitude),
-            zoom: 14.5,
+            target: userLocation,
+            zoom: 15.0,
           );
           _logic.addUserMarker(position);
         });
+
+        final controller = await _logic.mapController.future;
+        controller.animateCamera(CameraUpdate.newCameraPosition(
+          CameraPosition(target: userLocation, zoom: 15.0),
+        ));
+      } else {
+        _showErrorSnackbar('No se pudo obtener la ubicación.');
       }
     } catch (e) {
       _showErrorSnackbar('Error al cargar el mapa: $e');
     } finally {
-      if (mounted) setState(() => isLoading = false);
+      if (mounted) setState(() => _isLoading = false);
+    }
+  }
+
+  Future<void> _requestService() async {
+    if (_passengerStatus != PassengerStatus.idle) return;
+
+    final position = await _logic.getCurrentUserPosition();
+    if (position == null) {
+      _showErrorSnackbar('No se pudo obtener tu ubicación actual.');
+      return;
+    }
+
+    setState(() {
+      _passengerStatus = PassengerStatus.searching;
+      _isLoading = true;
+    });
+
+    try {
+      final location = LatLng(position.latitude!, position.longitude!);
+      final newRequest = await ServiceRequestService.createRequest(location);
+
+      setState(() {
+        _activeRequest = newRequest;
+        _isLoading = false;
+      });
+
+      _startStatusChecker();
+    } catch (e) {
+      _showErrorSnackbar(e.toString());
+      setState(() {
+        _passengerStatus = PassengerStatus.idle;
+        _isLoading = false;
+      });
     }
   }
 
   void _showErrorSnackbar(String message) {
     if (mounted) {
-      ScaffoldMessenger.of(context)
-          .showSnackBar(SnackBar(content: Text(message)));
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(
+            message,
+            style: GoogleFonts.inter(color: Colors.white),
+          ),
+          backgroundColor: Colors.redAccent,
+          behavior: SnackBarBehavior.floating,
+          margin: const EdgeInsets.all(16),
+        ),
+      );
     }
   }
 
-  // Cambia el estado del conductor entre online y offline
-  void _toggleOnlineStatus(bool isOnline) {
-    setState(() {
-      _driverStatus = isOnline ? DriverStatus.online : DriverStatus.offline;
-    });
+  void _cancelRide() async {
+    _statusCheckTimer?.cancel();
+
+    if (_activeRequest == null) {
+      setState(() {
+        _passengerStatus = PassengerStatus.idle;
+      });
+      return;
+    }
+
+    setState(() => _isLoading = true);
+
+    try {
+      await ServiceRequestService.cancelRequest(_activeRequest!.id);
+      _showErrorSnackbar('Tu solicitud ha sido cancelada.');
+    } catch (e) {
+      _showErrorSnackbar(
+          'No se pudo cancelar la solicitud. Inténtalo de nuevo.');
+      print("Error al cancelar: $e");
+    } finally {
+      if (mounted) {
+        setState(() {
+          _passengerStatus = PassengerStatus.idle;
+          _activeRequest = null;
+          _isLoading = false;
+          _logic.removeDriverMarker('driver_1');
+        });
+      }
+    }
   }
 
-  // --- Lógica de flujo de servicio ---
-  void _acceptRequest() {
-    setState(() => _driverStatus = DriverStatus.enRouteToUser);
-  }
+  void _startStatusChecker() {
+    _statusCheckTimer?.cancel();
+    _statusCheckTimer =
+        Timer.periodic(const Duration(seconds: 10), (timer) async {
+      if (_activeRequest == null) {
+        timer.cancel();
+        return;
+      }
 
-  void _rejectRequest() {
-    setState(() => _driverStatus = DriverStatus.online);
-  }
-
-  void _updateServiceStatus() {
-    setState(() {
-      if (_driverStatus == DriverStatus.enRouteToUser) {
-        _driverStatus = DriverStatus.onService;
-      } else if (_driverStatus == DriverStatus.onService) {
-        _driverStatus = DriverStatus.online; // Vuelve a estar disponible
+      try {
+        final updatedRequest =
+            await ServiceRequestService.getRequestStatus(_activeRequest!.id);
+        if (updatedRequest.technicianId != null) {
+          timer.cancel();
+          setState(() {
+            _activeRequest = updatedRequest;
+            _passengerStatus = PassengerStatus.driverAssigned;
+            _logic.addDriverMarker(
+              LatLng(
+                _logic.initialCameraPosition.target.latitude + 0.01,
+                _logic.initialCameraPosition.target.longitude + 0.01,
+              ),
+              'driver_1',
+            );
+          });
+        }
+      } catch (e) {
+        print("Error checking status: $e");
       }
     });
+  }
+
+  void _startTrip() {
+    setState(() => _passengerStatus = PassengerStatus.onTrip);
+  }
+
+  void _endTrip() {
+    setState(() => _passengerStatus = PassengerStatus.idle);
+    _logic.removeDriverMarker('driver_1');
   }
 
   @override
@@ -108,51 +217,72 @@ class _DriverDashboardScreenState extends State<DriverDashboardScreen> {
                 _logic.mapController.complete(controller),
             markers: _logic.markers,
             myLocationEnabled: true,
-            myLocationButtonEnabled: false,
+            myLocationButtonEnabled: true,
             zoomControlsEnabled: false,
+            padding: const EdgeInsets.only(bottom: 150),
           ),
-
-          // La UI del conductor se construye aquí
-          _buildDriverUI(),
-
-          if (isLoading) const Center(child: CircularProgressIndicator()),
-
-          // Botón flotante para simular una nueva solicitud (SOLO PARA PRUEBAS)
-          if (_driverStatus == DriverStatus.online)
+          _buildPassengerUI(),
+          if (_isLoading)
+            FadeIn(
+              child: Container(
+                color: Colors.black.withOpacity(0.3),
+                child: const Center(child: CircularProgressIndicator()),
+              ),
+            ),
+          if (_passengerStatus == PassengerStatus.idle)
             Positioned(
               bottom: 100,
               right: 16,
-              child: FloatingActionButton(
-                onPressed: _simulateIncomingRequest,
-                backgroundColor: Colors.amber,
-                child: const Icon(Icons.notifications_active),
+              child: ZoomIn(
+                child: FloatingActionButton.large(
+                  onPressed: _requestService,
+                  backgroundColor: AppColors.primary,
+                  elevation: 6,
+                  shape: const CircleBorder(),
+                  child: const Icon(Icons.bolt, color: Colors.white, size: 32),
+                ),
               ),
-            )
+            ),
         ],
       ),
     );
   }
 
-  Widget _buildDriverUI() {
+  Widget _buildPassengerUI() {
     return Stack(
       children: [
-        // Panel superior siempre visible
-        _buildTopHeaderPanel(),
-
-        // Paneles inferiores que cambian según el estado
-        if (_driverStatus == DriverStatus.incomingRequest)
-          _buildIncomingRequestPanel(),
-
-        if (_driverStatus == DriverStatus.enRouteToUser ||
-            _driverStatus == DriverStatus.onService)
-          _buildActiveServicePanel(),
+        _buildTopStatusPanel(),
+        if (_passengerStatus == PassengerStatus.searching)
+          FadeInUp(child: _buildSearchingPanel()),
+        if (_passengerStatus == PassengerStatus.driverAssigned)
+          FadeInUp(child: _buildDriverAssignedPanel()),
+        if (_passengerStatus == PassengerStatus.onTrip)
+          FadeInUp(child: _buildOnTripPanel()),
       ],
     );
   }
 
-  /// Panel superior con el Switch de estado y las ganancias.
-  Widget _buildTopHeaderPanel() {
-    bool isOnline = _driverStatus != DriverStatus.offline;
+  Widget _buildTopStatusPanel() {
+    String statusText;
+    Color statusColor;
+    switch (_passengerStatus) {
+      case PassengerStatus.idle:
+        statusText = 'Listo para solicitar';
+        statusColor = Colors.grey.shade700;
+        break;
+      case PassengerStatus.searching:
+        statusText = 'Buscando técnico';
+        statusColor = Colors.blueAccent;
+        break;
+      case PassengerStatus.driverAssigned:
+        statusText = 'Técnico asignado';
+        statusColor = Colors.green;
+        break;
+      case PassengerStatus.onTrip:
+        statusText = 'En servicio';
+        statusColor = Colors.green;
+        break;
+    }
 
     return Positioned(
       top: 0,
@@ -161,45 +291,32 @@ class _DriverDashboardScreenState extends State<DriverDashboardScreen> {
       child: SafeArea(
         child: Padding(
           padding: const EdgeInsets.all(12.0),
-          child: Card(
-            elevation: 4,
-            child: Padding(
-              padding:
-                  const EdgeInsets.symmetric(horizontal: 16.0, vertical: 8.0),
-              child: Row(
-                mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                children: [
-                  if (isOnline)
-                    const Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Text('Ganancias Hoy',
-                            style: TextStyle(color: Colors.grey)),
-                        Text('\$125.50',
-                            style: TextStyle(
-                                fontSize: 20, fontWeight: FontWeight.bold)),
-                      ],
+          child: FadeInDown(
+            child: Card(
+              elevation: 6,
+              shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(16)),
+              child: Padding(
+                padding: const EdgeInsets.symmetric(
+                    horizontal: 16.0, vertical: 12.0),
+                child: Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  children: [
+                    Text(
+                      statusText,
+                      style: GoogleFonts.inter(
+                        fontSize: 16,
+                        fontWeight: FontWeight.w600,
+                        color: statusColor,
+                      ),
                     ),
-                  Row(
-                    children: [
-                      Text(
-                        isOnline ? 'En Línea' : 'Desconectado',
-                        style: TextStyle(
-                          fontSize: 16,
-                          fontWeight: FontWeight.bold,
-                          color: isOnline ? Colors.green : Colors.red,
-                        ),
+                    if (_passengerStatus != PassengerStatus.idle)
+                      IconButton(
+                        icon: const Icon(Icons.cancel, color: Colors.redAccent),
+                        onPressed: _cancelRide,
                       ),
-                      const SizedBox(width: 8),
-                      Switch(
-                        value: isOnline,
-                        onChanged: _toggleOnlineStatus,
-                        activeTrackColor: Colors.green.shade200,
-                        activeColor: Colors.green,
-                      ),
-                    ],
-                  ),
-                ],
+                  ],
+                ),
               ),
             ),
           ),
@@ -208,90 +325,196 @@ class _DriverDashboardScreenState extends State<DriverDashboardScreen> {
     );
   }
 
-  /// Panel para una nueva solicitud entrante.
-  Widget _buildIncomingRequestPanel() {
+  Widget _buildSearchingPanel() {
     return Positioned(
-      bottom: 0,
-      left: 0,
-      right: 0,
-      child: Card(
-        margin: const EdgeInsets.all(16),
-        elevation: 8,
-        child: Padding(
-          padding: const EdgeInsets.all(16.0),
-          child: Column(
-            children: [
-              const Text('NUEVA SOLICITUD',
-                  style: TextStyle(
-                      fontSize: 12,
-                      color: Colors.blue,
-                      fontWeight: FontWeight.bold)),
-              const SizedBox(height: 8),
-              const Text('5 min (2.3 km)',
-                  style: TextStyle(fontSize: 28, fontWeight: FontWeight.bold)),
-              const Text('Conector CCS1 - Carga de emergencia',
-                  style: TextStyle(fontSize: 16, color: Colors.grey)),
-              const SizedBox(height: 16),
-              const LinearProgressIndicator(), // Simula el tiempo para aceptar
-              const SizedBox(height: 16),
-              Row(
-                mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-                children: [
-                  ElevatedButton(
-                    onPressed: _rejectRequest,
-                    style: ElevatedButton.styleFrom(
-                        backgroundColor: Colors.grey.shade300,
-                        foregroundColor: Colors.black),
-                    child: const Text('Rechazar'),
+      bottom: 100,
+      left: 16,
+      right: 16,
+      child: FadeInUp(
+        child: Card(
+          elevation: 8,
+          shape:
+              RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+          child: Padding(
+            padding: const EdgeInsets.all(20.0),
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Text(
+                  'Buscando un técnico...',
+                  style: GoogleFonts.inter(
+                    fontSize: 20,
+                    fontWeight: FontWeight.bold,
+                    color: AppColors.primary,
                   ),
-                  ElevatedButton(
-                    onPressed: _acceptRequest,
-                    child: const Text('Aceptar'),
+                ),
+                const SizedBox(height: 16),
+                LinearProgressIndicator(
+                  backgroundColor: Colors.grey.shade200,
+                  valueColor: AlwaysStoppedAnimation<Color>(AppColors.primary),
+                ),
+                const SizedBox(height: 16),
+                ElevatedButton(
+                  onPressed: _cancelRide,
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: Colors.redAccent,
+                    foregroundColor: Colors.white,
+                    shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(12)),
+                    padding: const EdgeInsets.symmetric(
+                        vertical: 14, horizontal: 24),
+                    elevation: 2,
                   ),
-                ],
-              )
-            ],
+                  child: Text(
+                    'Cancelar',
+                    style: GoogleFonts.inter(
+                        fontSize: 16, fontWeight: FontWeight.w600),
+                  ),
+                ),
+              ],
+            ),
           ),
         ),
       ),
     );
   }
 
-  /// Panel para un servicio activo (en camino o cargando).
-  Widget _buildActiveServicePanel() {
-    bool enRuta = _driverStatus == DriverStatus.enRouteToUser;
-
+  Widget _buildDriverAssignedPanel() {
     return Positioned(
-      bottom: 0,
-      left: 0,
-      right: 0,
-      child: Card(
-        margin: const EdgeInsets.all(16),
-        elevation: 8,
-        child: Padding(
-          padding: const EdgeInsets.all(16.0),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.stretch,
-            children: [
-              Text(enRuta ? 'DIRÍGETE AL CLIENTE' : 'SERVICIO EN CURSO',
-                  style: const TextStyle(
-                      color: Colors.blue, fontWeight: FontWeight.bold)),
-              const SizedBox(height: 8),
-              const ListTile(
-                leading: CircleAvatar(child: Icon(Icons.person)),
-                title: Text('Ana García'),
-                subtitle: Text('123 Main St, Anytown'),
-                trailing: Icon(Icons.phone),
-              ),
-              const SizedBox(height: 16),
-              ElevatedButton.icon(
-                icon: Icon(enRuta ? Icons.navigation : Icons.ev_station),
-                label: Text(enRuta ? 'Iniciar Navegación' : 'Finalizar Carga'),
-                onPressed: _updateServiceStatus,
-                style: ElevatedButton.styleFrom(
-                    padding: const EdgeInsets.symmetric(vertical: 16)),
-              )
-            ],
+      bottom: 100,
+      left: 16,
+      right: 16,
+      child: FadeInUp(
+        child: Card(
+          elevation: 8,
+          shape:
+              RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+          child: Padding(
+            padding: const EdgeInsets.all(20.0),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.stretch,
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Text(
+                  'Técnico asignado',
+                  style: GoogleFonts.inter(
+                    fontSize: 20,
+                    fontWeight: FontWeight.bold,
+                    color: AppColors.primary,
+                  ),
+                ),
+                const SizedBox(height: 12),
+                ListTile(
+                  contentPadding: EdgeInsets.zero,
+                  leading: CircleAvatar(
+                    backgroundColor: AppColors.primary.withOpacity(0.1),
+                    child: const Icon(Icons.person, color: AppColors.primary),
+                  ),
+                  title: Text(
+                    'Juan Pérez',
+                    style: GoogleFonts.inter(
+                        fontSize: 16, fontWeight: FontWeight.w600),
+                  ),
+                  subtitle: Text(
+                    '5 min (2.3 km) - Conector CCS1',
+                    style: GoogleFonts.inter(
+                        fontSize: 14, color: Colors.grey.shade600),
+                  ),
+                  trailing: IconButton(
+                    icon: const Icon(Icons.phone, color: AppColors.primary),
+                    onPressed: () {},
+                  ),
+                ),
+                const SizedBox(height: 16),
+                ElevatedButton(
+                  onPressed: _startTrip,
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: AppColors.primary,
+                    foregroundColor: Colors.white,
+                    shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(12)),
+                    padding: const EdgeInsets.symmetric(vertical: 14),
+                    elevation: 2,
+                  ),
+                  child: Text(
+                    'Confirmar llegada del técnico',
+                    style: GoogleFonts.inter(
+                        fontSize: 16, fontWeight: FontWeight.w600),
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+
+  Widget _buildOnTripPanel() {
+    return Positioned(
+      bottom: 100,
+      left: 16,
+      right: 16,
+      child: FadeInUp(
+        child: Card(
+          elevation: 8,
+          shape:
+              RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+          child: Padding(
+            padding: const EdgeInsets.all(20.0),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.stretch,
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Text(
+                  'Servicio en curso',
+                  style: GoogleFonts.inter(
+                    fontSize: 20,
+                    fontWeight: FontWeight.bold,
+                    color: AppColors.primary,
+                  ),
+                ),
+                const SizedBox(height: 12),
+                ListTile(
+                  contentPadding: EdgeInsets.zero,
+                  leading: CircleAvatar(
+                    backgroundColor: AppColors.primary.withOpacity(0.1),
+                    child: const Icon(Icons.person, color: AppColors.primary),
+                  ),
+                  title: Text(
+                    'Juan Pérez',
+                    style: GoogleFonts.inter(
+                        fontSize: 16, fontWeight: FontWeight.w600),
+                  ),
+                  subtitle: Text(
+                    'Cargando - Conector CCS1',
+                    style: GoogleFonts.inter(
+                        fontSize: 14, color: Colors.grey.shade600),
+                  ),
+                  trailing: IconButton(
+                    icon: const Icon(Icons.phone, color: AppColors.primary),
+                    onPressed: () {},
+                  ),
+                ),
+                const SizedBox(height: 16),
+                ElevatedButton(
+                  onPressed: _endTrip,
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: AppColors.primary,
+                    foregroundColor: Colors.white,
+                    shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(12)),
+                    padding: const EdgeInsets.symmetric(vertical: 14),
+                    elevation: 2,
+                  ),
+                  child: Text(
+                    'Finalizar servicio',
+                    style: GoogleFonts.inter(
+                        fontSize: 16, fontWeight: FontWeight.w600),
+                  ),
+                ),
+              ],
+            ),
           ),
         ),
       ),
