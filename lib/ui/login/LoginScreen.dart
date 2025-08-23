@@ -272,12 +272,12 @@ class _LoginScreenState extends State<LoginScreen>
       child: Column(
         children: [
           Image.asset(
-            'assets/images/logoapp.jpg', // Asegúrate de tener esta imagen en tus assets
+            'assets/images/logoapp.jpeg', // Asegúrate de tener esta imagen en tus assets
             height: 120, // Ajusta el tamaño según tu logo
           ),
           const SizedBox(height: 16),
           const Text(
-            'Bienvenido',
+            'Bienvenido Usuario',
             style: TextStyle(
               fontSize: 28,
               fontWeight: FontWeight.bold,
@@ -295,7 +295,7 @@ class _LoginScreenState extends State<LoginScreen>
       children: [
         _buildTextField(
           label: 'Correo electrónico',
-          hint: 'Ingresa',
+          hint: 'Ingresa tu correo electronico.',
           controller: _emailController, // <-- Usa el nuevo nombre
         ),
         const SizedBox(height: 20),
@@ -330,37 +330,40 @@ class _LoginScreenState extends State<LoginScreen>
   Widget _buildFooter() {
     return Column(
       children: [
-        Row(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            const Text('¿No tienes una cuenta? ',
-                style: TextStyle(color: AppColors.textSecondary)),
-            GestureDetector(
-              onTap: () {
-                Navigator.push(
-                  context,
-                  MaterialPageRoute(
-                      builder: (context) => const RegisterScreen()),
-                );
-              },
-              child: const Text('Créala aquí.',
-                  style: TextStyle(
-                      color: AppColors.brandBlue, fontWeight: FontWeight.bold)),
-            ),
-          ],
-        ),
-        const SizedBox(height: 10),
-        GestureDetector(
+        InkWell(
           onTap: () {
             Navigator.push(
               context,
-              MaterialPageRoute(builder: (context) => const BottomNavBar()),
+              MaterialPageRoute(builder: (context) => const RegisterScreen()),
             );
           },
-          child: const Text('Recupera tu cuenta.',
-              style: TextStyle(
-                  color: AppColors.brandBlue, fontWeight: FontWeight.bold)),
+          child: Row(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              const Text('¿No tienes una cuenta? ',
+                  style: TextStyle(
+                    fontSize: 15,
+                    fontWeight: FontWeight.bold,
+                    color: AppColors.textSecondary,
+                  )),
+              GestureDetector(
+                onTap: () {
+                  Navigator.push(
+                    context,
+                    MaterialPageRoute(
+                        builder: (context) => const RegisterScreen()),
+                  );
+                },
+                child: const Text('Créala aquí.',
+                    style: TextStyle(
+                        color: AppColors.brandBlue,
+                        fontSize: 15,
+                        fontWeight: FontWeight.bold)),
+              ),
+            ],
+          ),
         ),
+        const SizedBox(height: 10),
       ],
     );
   }

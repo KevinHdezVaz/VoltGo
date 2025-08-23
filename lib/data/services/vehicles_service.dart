@@ -1,4 +1,5 @@
 import 'dart:convert';
+import 'package:Voltgo_User/data/models/User/UserVehicle.dart';
 import 'package:flutter/foundation.dart'; // Import for debugPrint
 import 'package:http/http.dart' as http;
 import 'package:intl/intl.dart';
@@ -10,50 +11,23 @@ import 'package:Voltgo_User/utils/TokenStorage.dart';
 import 'package:Voltgo_User/utils/constants.dart'; // Tu clase TokenStorage
 
 class VehicleService {
+// En tu VehicleService.dart
+
   static Future<Map<String, String>> _getAuthHeaders() async {
     final token = await TokenStorage.getToken();
-    debugPrint('AuthService: Obteniendo token: $token'); // Log del token
-    return {
-      'Authorization':
-          'Token $token', // Ajusta según el tipo de token (Bearer, Token, etc.)
-      'Content-Type': 'application/json',
-      'Accept': 'application/json',
-    };
-  }
-
-  static Future<void> addVehicle({
-    required String make,
-    required String model,
-    required int year,
-    required String connectorType,
-  }) async {
-    final url = Uri.parse('${Constants.baseUrl}/vehicles');
-    final token = await TokenStorage.getToken();
+    // No necesitas el debugPrint aquí si ya lo tienes en otros lados
 
     if (token == null) {
-      throw Exception('No se encontró el token de autenticación');
+      // Es buena práctica manejar el caso en que el token no exista
+      throw Exception('Token no encontrado. Inicia sesión de nuevo.');
     }
 
-    final headers = {
+    return {
+      // ✅ CAMBIO REALIZADO AQUÍ
+      'Authorization': 'Bearer $token',
       'Content-Type': 'application/json',
       'Accept': 'application/json',
-      'Authorization': 'Bearer $token',
     };
-
-    final body = jsonEncode({
-      'make': make,
-      'model': model,
-      'year': year,
-      'connector_type': connectorType,
-    });
-
-    final response = await http.post(url, headers: headers, body: body);
-
-    // 201 Created es la respuesta correcta para un recurso creado
-    if (response.statusCode != 201) {
-      final errorData = jsonDecode(response.body);
-      throw Exception(errorData['message'] ?? 'Error al registrar el vehículo');
-    }
   }
 
   static Future<List<Vehicle>> getAllVehicles() async {
@@ -228,6 +202,108 @@ class VehicleService {
       debugPrint(
           'VehicleService: Error en setVehicleType: $e'); // Log del error
       throw Exception('Set type failed: $e');
+    }
+  }
+
+  static Future<void> updateUserVehicle({
+    required int vehicleId,
+    required String make,
+    required String model,
+    required int year,
+    required String connectorType,
+    String? plate,
+    String? color,
+  }) async {
+    final url = Uri.parse('${Constants.baseUrl}/user/vehicles/$vehicleId');
+
+    try {
+      final headers = await _getAuthHeaders();
+
+      final body = jsonEncode({
+        'make': make,
+        'model': model,
+        'year': year,
+        'connector_type': connectorType,
+        if (plate != null && plate.isNotEmpty) 'plate': plate,
+        if (color != null && color.isNotEmpty) 'color': color,
+      });
+
+      final response = await http.put(url, headers: headers, body: body);
+
+      if (response.statusCode != 200) {
+        final errorData = jsonDecode(response.body);
+        throw Exception(
+            errorData['message'] ?? 'Error al actualizar el vehículo');
+      }
+    } catch (e) {
+      debugPrint('VehicleService: Error en updateUserVehicle: $e');
+      throw Exception('Error al actualizar el vehículo: $e');
+    }
+  }
+
+  // Obtener vehículos del usuario
+  static Future<List<UserVehicle>> getUserVehicles() async {
+    final url = Uri.parse('${Constants.baseUrl}/user/vehicles');
+
+    try {
+      final response = await http.get(url, headers: await _getAuthHeaders());
+
+      debugPrint(
+          'VehicleService: Respuesta GET ${response.statusCode}: ${response.body}');
+
+      if (response.statusCode == 200) {
+        final Map<String, dynamic> data = jsonDecode(response.body);
+        final List<dynamic> vehiclesJson = data['vehicles'];
+        return vehiclesJson.map((json) => UserVehicle.fromJson(json)).toList();
+      } else {
+        throw Exception('Failed to load user vehicles: ${response.statusCode}');
+      }
+    } catch (e) {
+      debugPrint('VehicleService: Error en getUserVehicles: $e');
+      throw Exception('Error al obtener vehículos: $e');
+    }
+  }
+
+  static Future<void> addVehicle({
+    required String make,
+    required String model,
+    required int year,
+    required String connectorType,
+    String? plate,
+    String? color,
+  }) async {
+    final url = Uri.parse('${Constants.baseUrl}/user/vehicles');
+
+    try {
+      final headers = await _getAuthHeaders();
+
+      final body = jsonEncode({
+        'make': make,
+        'model': model,
+        'year': year,
+        'connector_type': connectorType,
+        if (plate != null && plate.isNotEmpty) 'plate': plate,
+        if (color != null && color.isNotEmpty) 'color': color,
+      });
+
+      debugPrint('VehicleService: Registrando vehículo de usuario en: $url');
+      debugPrint('VehicleService: Body: $body');
+
+      final response = await http.post(url, headers: headers, body: body);
+
+      debugPrint(
+          'VehicleService: Respuesta POST ${response.statusCode}: ${response.body}');
+
+      if (response.statusCode == 201 || response.statusCode == 200) {
+        debugPrint('VehicleService: Vehículo registrado exitosamente');
+      } else {
+        final errorData = jsonDecode(response.body);
+        throw Exception(
+            errorData['message'] ?? 'Error al registrar el vehículo');
+      }
+    } catch (e) {
+      debugPrint('VehicleService: Error en addVehicle: $e');
+      throw Exception('Error al registrar el vehículo: $e');
     }
   }
 

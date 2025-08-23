@@ -263,7 +263,7 @@ class _HistoryScreenState extends State<HistoryScreen>
                   child: Icon(icon, color: statusColor, size: 28),
                 ),
                 title: Text(
-                  item.locationDescription,
+                  item.status,
                   style: const TextStyle(
                     fontWeight: FontWeight.w600,
                     fontSize: 16,
@@ -271,16 +271,16 @@ class _HistoryScreenState extends State<HistoryScreen>
                   ),
                 ),
                 subtitle: Text(
-                  '${item.formattedDate} - ${item.formattedTime} • ${item.status}',
+                  '${item.acceptedAt} - ${item.acceptedAt} • ${item.status}',
                   style: TextStyle(
                     fontSize: 14,
                     color: statusColor,
                     fontWeight: FontWeight.w500,
                   ),
                 ),
-                trailing: item.finalCost != null
+                trailing: item.status != null
                     ? Text(
-                        '\$${item.finalCost!.toStringAsFixed(2)}',
+                        '\$${item.status}',
                         style: const TextStyle(
                           fontWeight: FontWeight.w700,
                           fontSize: 16,
