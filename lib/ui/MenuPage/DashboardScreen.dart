@@ -2,7 +2,11 @@ import 'dart:async';
 import 'dart:convert';
 import 'package:Voltgo_User/data/logic/dashboard/DashboardLogic.dart';
 import 'package:Voltgo_User/data/models/User/ServiceRequestModel.dart';
+import 'package:Voltgo_User/data/services/ChatService.dart';
+import 'package:Voltgo_User/data/services/ServiceChatScreen.dart';
 import 'package:Voltgo_User/data/services/ServiceRequestService.dart';
+import 'package:Voltgo_User/data/services/UserService.dart';
+import 'package:Voltgo_User/l10n/app_localizations.dart';
 import 'package:Voltgo_User/ui/MenuPage/ClientRealTimeTrackingWidget.dart';
 import 'package:Voltgo_User/utils/TokenStorage.dart';
 import 'package:Voltgo_User/utils/constants.dart';
@@ -28,7 +32,7 @@ class PassengerMapScreen extends StatefulWidget {
 }
 
 class _PassengerMapScreenState extends State<PassengerMapScreen>
-    with TickerProviderStateMixin {
+    with TickerProviderStateMixin, WidgetsBindingObserver {
   late final DashboardLogic _logic;
   late AnimationController _slideController;
   late Animation<Offset> _slideAnimation;
@@ -51,8 +55,10 @@ class _PassengerMapScreenState extends State<PassengerMapScreen>
   String _vehicleInfo = '';
   String _connectorType = '';
   int _searchingDots = 0;
-
+  bool _hasVehicleRegistered = false;
+  bool _isCheckingVehicle = true;
   String? _lastKnownStatus;
+  DateTime? _lastBackgroundTime;
 
   String? _lastActiveServiceStatus;
   ServiceRequestModel? _activeServiceRequest;
@@ -62,7 +68,12 @@ class _PassengerMapScreenState extends State<PassengerMapScreen>
     super.initState();
     _logic = DashboardLogic();
     _initializeAnimations();
-    _initializeMap();
+
+    // Agregar observer para el ciclo de vida de la app
+    WidgetsBinding.instance.addObserver(this);
+
+    // ✅ Verificar vehículo registrado ANTES de inicializar el mapa
+    _checkVehicleRegistration();
   }
 
   void _initializeAnimations() {
@@ -82,13 +93,40 @@ class _PassengerMapScreenState extends State<PassengerMapScreen>
 
   @override
   void dispose() {
-    _slideController.dispose();
-    _cancellationTimeTimer?.cancel(); // ✅ NUEVO
+    // ✅ NUEVO: Remover observer
+    WidgetsBinding.instance.removeObserver(this);
 
+    _slideController.dispose();
+    _cancellationTimeTimer?.cancel();
     _logic.dispose();
     _statusCheckTimer?.cancel();
     _searchingAnimationTimer?.cancel();
     super.dispose();
+  }
+
+  // ✅ Manejar cambios en el ciclo de vida de la app
+  @override
+  void didChangeAppLifecycleState(AppLifecycleState state) {
+    super.didChangeAppLifecycleState(state);
+
+    switch (state) {
+      case AppLifecycleState.paused:
+        _lastBackgroundTime = DateTime.now();
+        print('📱 App fue al background: $_lastBackgroundTime');
+        break;
+
+      case AppLifecycleState.resumed:
+        print('📱 App regresó del background');
+        _handleAppResumed();
+        break;
+
+      case AppLifecycleState.detached:
+        print('📱 App se está cerrando');
+        break;
+
+      default:
+        break;
+    }
   }
 
   Future<void> _initializeMap() async {
@@ -418,6 +456,8 @@ class _PassengerMapScreenState extends State<PassengerMapScreen>
   }
 
   void _showLocationDialog() {
+    final l10n = AppLocalizations.of(context);
+
     showDialog(
       context: context,
       barrierDismissible: false,
@@ -434,16 +474,14 @@ class _PassengerMapScreenState extends State<PassengerMapScreen>
               child: Icon(Icons.location_on, color: AppColors.primary),
             ),
             const SizedBox(width: 12),
-            const Text('Ubicación Necesaria'),
+            Text(l10n.locationRequired),
           ],
         ),
-        content: const Text(
-          'Para solicitar un servicio necesitamos acceder a tu ubicación. Por favor, activa los servicios de ubicación.',
-        ),
+        content: Text(l10n.locationNeeded),
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(context),
-            child: Text('Cancelar',
+            child: Text(l10n.cancel,
                 style: TextStyle(color: AppColors.textSecondary)),
           ),
           ElevatedButton(
@@ -457,7 +495,357 @@ class _PassengerMapScreenState extends State<PassengerMapScreen>
                 borderRadius: BorderRadius.circular(10),
               ),
             ),
-            child: const Text('Activar', style: TextStyle(color: Colors.white)),
+            child: Text(l10n.activate, style: TextStyle(color: Colors.white)),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Future<void> _checkVehicleRegistration() async {
+    print('🔍 Iniciando verificación de vehículo registrado...');
+    setState(() => _isCheckingVehicle = true);
+
+    try {
+      // ✅ USAR EL MÉTODO CON FALLBACK
+      final hasVehicle = await UserService.hasRegisteredVehicleWithFallback();
+      print('📡 Respuesta final del UserService: hasVehicle = $hasVehicle');
+
+      setState(() {
+        _hasVehicleRegistered = hasVehicle;
+        _isCheckingVehicle = false;
+      });
+
+      if (!hasVehicle) {
+        print('⚠️ Usuario no tiene vehículo registrado, mostrando diálogo...');
+        WidgetsBinding.instance.addPostFrameCallback((_) {
+          _navigateToVehicleRegistration();
+        });
+      } else {
+        print('✅ Usuario tiene vehículo registrado, inicializando mapa...');
+        _initializeMap();
+      }
+    } catch (e) {
+      print('❌ Error verificando vehículo: $e');
+      setState(() => _isCheckingVehicle = false);
+      _showVehicleRegistrationDialog();
+    }
+  }
+
+// ✅ AGREGAR método de debugging para verificar estado
+  void _debugVehicleStatus() async {
+    print('🔧 DEBUG - Estado actual:');
+    print('  _hasVehicleRegistered: $_hasVehicleRegistered');
+    print('  _isCheckingVehicle: $_isCheckingVehicle');
+
+    try {
+      final hasVehicle = await UserService.hasRegisteredVehicle();
+      print('  Servidor dice: $hasVehicle');
+    } catch (e) {
+      print('  Error consultando servidor: $e');
+    }
+  }
+
+  void _showVehicleRegistrationDialog() {
+    showDialog(
+      context: context,
+      barrierDismissible: false,
+      builder: (context) => AlertDialog(
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+        title: Row(
+          children: [
+            Container(
+              padding: const EdgeInsets.all(8),
+              decoration: BoxDecoration(
+                color: AppColors.warning.withOpacity(0.1),
+                borderRadius: BorderRadius.circular(10),
+              ),
+              child:
+                  Icon(Icons.warning_amber, color: AppColors.warning, size: 30),
+            ),
+            const SizedBox(width: 12),
+            const Expanded(child: Text('Verificación Necesaria')),
+          ],
+        ),
+        content: Text(
+          'No pudimos verificar si tienes un vehículo registrado. Por favor, asegúrate de tener un vehículo registrado para continuar.',
+          style: GoogleFonts.inter(fontSize: 16),
+        ),
+        actions: [
+          ElevatedButton(
+            onPressed: () {
+              Navigator.pop(context);
+              Navigator.pushNamed(context, '/vehicle-registration');
+            },
+            style: ElevatedButton.styleFrom(
+              backgroundColor: AppColors.primary,
+              shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(10)),
+            ),
+            child: const Text('Ir a Registro',
+                style: TextStyle(color: Colors.white)),
+          ),
+        ],
+      ),
+    );
+  }
+
+// ✅ ACTUALIZAR _navigateToVehicleRegistration() con verificación mejorada
+  void _navigateToVehicleRegistration() {
+    showDialog(
+      context: context,
+      barrierDismissible: false,
+      builder: (context) => WillPopScope(
+        onWillPop: () async => false,
+        child: AlertDialog(
+          shape:
+              RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+          title: Row(
+            children: [
+              Container(
+                padding: const EdgeInsets.all(8),
+                decoration: BoxDecoration(
+                  color: AppColors.primary.withOpacity(0.1),
+                  borderRadius: BorderRadius.circular(10),
+                ),
+                child: Icon(Icons.directions_car,
+                    color: AppColors.primary, size: 30),
+              ),
+              const SizedBox(width: 12),
+              const Expanded(child: Text('Registra tu Vehículo')),
+            ],
+          ),
+          content: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text(
+                'Para utilizar VoltGo necesitas registrar tu vehículo eléctrico.',
+                style: GoogleFonts.inter(fontSize: 16),
+              ),
+              const SizedBox(height: 16),
+              Container(
+                padding: const EdgeInsets.all(12),
+                decoration: BoxDecoration(
+                  color: AppColors.info.withOpacity(0.1),
+                  borderRadius: BorderRadius.circular(8),
+                  border: Border.all(color: AppColors.info.withOpacity(0.3)),
+                ),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Row(
+                      children: [
+                        Icon(Icons.info_outline,
+                            color: AppColors.info, size: 20),
+                        const SizedBox(width: 8),
+                        Text(
+                          '¿Por qué es necesario?',
+                          style: GoogleFonts.inter(
+                            fontWeight: FontWeight.w600,
+                            color: AppColors.info,
+                          ),
+                        ),
+                      ],
+                    ),
+                    const SizedBox(height: 8),
+                    Text(
+                      '• Identificar el tipo de conector necesario\n'
+                      '• Calcular tiempos de carga precisos\n'
+                      '• Asignar técnicos especializados\n'
+                      '• Brindar el mejor servicio personalizado',
+                      style: GoogleFonts.inter(fontSize: 14),
+                    ),
+                  ],
+                ),
+              ),
+            ],
+          ),
+          actions: [
+            ElevatedButton(
+              onPressed: () async {
+                Navigator.pop(context);
+
+                print('🚀 Navegando a registro de vehículo...');
+
+                final result = await Navigator.pushNamed(
+                  context,
+                  '/vehicle-registration',
+                );
+
+                print('🔄 Resultado de registro: $result');
+
+                if (result == true) {
+                  print('✅ Vehículo registrado exitosamente, verificando...');
+
+                  // ✅ ESPERAR UN MOMENTO PARA QUE EL SERVIDOR SE ACTUALICE
+                  setState(() {
+                    _isCheckingVehicle = true;
+                  });
+
+                  await Future.delayed(const Duration(seconds: 3));
+
+                  try {
+                    // ✅ USAR VERIFICACIÓN CON FALLBACK
+                    final hasVehicle =
+                        await UserService.hasRegisteredVehicleWithFallback();
+                    print('🔍 Re-verificación del servidor: $hasVehicle');
+
+                    if (hasVehicle) {
+                      setState(() {
+                        _hasVehicleRegistered = true;
+                        _isCheckingVehicle = false;
+                      });
+                      print('✅ Estado actualizado, inicializando mapa...');
+                      _initializeMap();
+                    } else {
+                      print(
+                          '⚠️ Servidor aún no refleja el cambio, intentando una vez más...');
+
+                      // ✅ SEGUNDO INTENTO CON MÁS TIEMPO
+                      await Future.delayed(const Duration(seconds: 5));
+                      final hasVehicleRetry =
+                          await UserService.hasRegisteredVehicleWithFallback();
+
+                      if (hasVehicleRetry) {
+                        setState(() {
+                          _hasVehicleRegistered = true;
+                          _isCheckingVehicle = false;
+                        });
+                        _initializeMap();
+                      } else {
+                        print(
+                            '❌ El servidor no refleja el cambio. Mostrando mensaje al usuario.');
+                        setState(() => _isCheckingVehicle = false);
+                        _showServerSyncIssueDialog();
+                      }
+                    }
+                  } catch (e) {
+                    print('❌ Error re-verificando: $e');
+                    setState(() {
+                      _hasVehicleRegistered =
+                          true; // Confiar en el registro exitoso
+                      _isCheckingVehicle = false;
+                    });
+                    _initializeMap();
+                  }
+                } else {
+                  print(
+                      '❌ Registro cancelado, mostrando diálogo nuevamente...');
+                  _navigateToVehicleRegistration();
+                }
+              },
+              style: ElevatedButton.styleFrom(
+                backgroundColor: AppColors.primary,
+                minimumSize: const Size(double.infinity, 48),
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(12),
+                ),
+              ),
+              child: Text(
+                'Registrar Vehículo',
+                style: GoogleFonts.inter(
+                  color: Colors.white,
+                  fontWeight: FontWeight.w600,
+                ),
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+// ✅ NUEVO: Diálogo para problemas de sincronización con el servidor
+  void _showServerSyncIssueDialog() {
+    showDialog(
+      context: context,
+      builder: (context) => AlertDialog(
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+        title: Row(
+          children: [
+            Container(
+              padding: const EdgeInsets.all(8),
+              decoration: BoxDecoration(
+                color: AppColors.warning.withOpacity(0.1),
+                borderRadius: BorderRadius.circular(10),
+              ),
+              child:
+                  Icon(Icons.sync_problem, color: AppColors.warning, size: 30),
+            ),
+            const SizedBox(width: 12),
+            const Expanded(child: Text('Sincronización en Proceso')),
+          ],
+        ),
+        content: Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text(
+              'Tu vehículo se registró correctamente, pero el sistema está sincronizando la información.',
+              style: GoogleFonts.inter(fontSize: 16),
+            ),
+            const SizedBox(height: 16),
+            Container(
+              padding: const EdgeInsets.all(12),
+              decoration: BoxDecoration(
+                color: AppColors.info.withOpacity(0.1),
+                borderRadius: BorderRadius.circular(8),
+                border: Border.all(color: AppColors.info.withOpacity(0.3)),
+              ),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Row(
+                    children: [
+                      Icon(Icons.info_outline, color: AppColors.info, size: 20),
+                      const SizedBox(width: 8),
+                      Text(
+                        'Opciones:',
+                        style: GoogleFonts.inter(
+                          fontWeight: FontWeight.w600,
+                          color: AppColors.info,
+                        ),
+                      ),
+                    ],
+                  ),
+                  const SizedBox(height: 8),
+                  Text(
+                    '• Espera unos segundos y continúa\n'
+                    '• Cierra y vuelve a abrir la app\n'
+                    '• Si persiste, contacta soporte',
+                    style: GoogleFonts.inter(fontSize: 14),
+                  ),
+                ],
+              ),
+            ),
+          ],
+        ),
+        actions: [
+          TextButton(
+            onPressed: () {
+              Navigator.pop(context);
+              _navigateToVehicleRegistration(); // Intentar de nuevo
+            },
+            child: Text('Reintentar'),
+          ),
+          ElevatedButton(
+            onPressed: () {
+              Navigator.pop(context);
+              // Forzar continuación
+              setState(() {
+                _hasVehicleRegistered = true;
+                _isCheckingVehicle = false;
+              });
+              _initializeMap();
+            },
+            style: ElevatedButton.styleFrom(
+              backgroundColor: AppColors.primary,
+              shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(10)),
+            ),
+            child: const Text('Continuar Anyway',
+                style: TextStyle(color: Colors.white)),
           ),
         ],
       ),
@@ -746,6 +1134,27 @@ class _PassengerMapScreenState extends State<PassengerMapScreen>
   Future<void> _requestService() async {
     print('🚀 _requestService called');
 
+    // ✅ NUEVA VERIFICACIÓN: Verificar vehículo registrado ANTES que todo
+    if (!_hasVehicleRegistered) {
+      print(
+          '⚠️ Usuario no tiene vehículo registrado, verificando en servidor...');
+      try {
+        final hasVehicle = await UserService.hasRegisteredVehicle();
+        if (!hasVehicle) {
+          print('❌ Confirmado: No tiene vehículo registrado');
+          _navigateToVehicleRegistration();
+          return;
+        }
+        // Si tiene vehículo, actualizar estado local
+        setState(() => _hasVehicleRegistered = true);
+        print('✅ Vehículo verificado, continuando con solicitud...');
+      } catch (e) {
+        print('❌ Error verificando vehículo: $e');
+        _showErrorMessage('Error al verificar tu vehículo registrado');
+        return;
+      }
+    }
+
     // ✅ VERIFICAR SERVICIOS ACTIVOS MÁS ROBUSTAMENTE
     if (_hasActiveService && _existingRequest != null) {
       print('ℹ️ Ya hay un servicio activo, mostrando diálogo');
@@ -772,11 +1181,13 @@ class _PassengerMapScreenState extends State<PassengerMapScreen>
       // Continuar con la creación si hay error en la verificación
     }
 
+    // ✅ VERIFICAR ESTADO DE LA UI
     if (_passengerStatus != PassengerStatus.idle) {
       print('ℹ️ Estado no es idle: $_passengerStatus');
       return;
     }
 
+    // ✅ VERIFICAR UBICACIÓN
     HapticFeedback.mediumImpact();
     final position = await _logic.getCurrentUserPosition();
     if (position == null) {
@@ -786,6 +1197,8 @@ class _PassengerMapScreenState extends State<PassengerMapScreen>
 
     print(
         '🚀 Requesting service at: ${position.latitude}, ${position.longitude}');
+
+    // ✅ INICIAR PROCESO DE BÚSQUEDA
     setState(() {
       _passengerStatus = PassengerStatus.searching;
       _isLoading = true;
@@ -796,27 +1209,45 @@ class _PassengerMapScreenState extends State<PassengerMapScreen>
     try {
       final location = LatLng(position.latitude!, position.longitude!);
       print('🚀 Creating request for location: $location');
+
+      // ✅ CREAR SOLICITUD EN EL SERVIDOR
       final newRequest = await ServiceRequestService.createRequest(location);
       print('✅ Request created successfully: ${newRequest.id}');
 
+      // ✅ ACTUALIZAR ESTADO LOCAL
       setState(() {
         _activeRequest = newRequest;
         _hasActiveService = true;
         _existingRequest = newRequest;
         _isLoading = false;
       });
+
+      // ✅ INICIAR VERIFICADOR DE ESTADO
       _startStatusChecker();
     } catch (e) {
       print('❌ DETAILED ERROR: $e');
+
+      // ✅ MENSAJES DE ERROR PERSONALIZADOS
       String errorMessage = 'Error al solicitar el servicio';
+
       if (e.toString().contains('No hay técnicos disponibles')) {
-        errorMessage = 'No hay técnicos disponibles en tu área.';
+        errorMessage =
+            'No hay técnicos disponibles en tu área en este momento.';
+      } else if (e.toString().contains('vehicle not registered') ||
+          e.toString().contains('vehículo no registrado')) {
+        // Si el servidor detecta que no tiene vehículo registrado
+        errorMessage =
+            'Necesitas registrar un vehículo para solicitar el servicio.';
+        setState(() => _hasVehicleRegistered = false);
+        _navigateToVehicleRegistration();
+        return;
       } else if (e.toString().contains('No autorizado')) {
         errorMessage =
             'Error de autorización. Por favor, inicia sesión nuevamente.';
       } else if (e.toString().contains('Token no encontrado')) {
         errorMessage = 'Sesión expirada. Por favor, inicia sesión nuevamente.';
       }
+
       _showErrorMessage(errorMessage);
 
       // ✅ LIMPIEZA COMPLETA en caso de error
@@ -1693,53 +2124,189 @@ class _PassengerMapScreenState extends State<PassengerMapScreen>
     return Icons.info;
   }
 
-  // ✅ NUEVO: Detectar cambios de estado y mostrar feedback apropiado
   void _checkForStatusChanges(ServiceRequestModel updatedRequest) {
     final currentStatus = updatedRequest.status;
 
     // Si el estado cambió, mostrar feedback
     if (_lastKnownStatus != null && _lastKnownStatus != currentStatus) {
+      bool isUrgentChange = false;
+      String title = '';
+      String message = '';
+      Color color = AppColors.info;
+
       switch (currentStatus) {
         case 'accepted':
           if (_lastKnownStatus == 'pending') {
-            _showStatusChangeFeedback(
-                '✅ ¡Técnico asignado!',
-                'Un técnico ha aceptado tu solicitud y está en camino.',
-                Colors.green);
+            title = '✅ ¡Técnico asignado!';
+            message = 'Un técnico ha aceptado tu solicitud y está en camino.';
+            color = Colors.green;
+            isUrgentChange = true;
           }
           break;
-
-        case 'en_route':
-          _showStatusChangeFeedback('🚗 Técnico en camino',
-              'El técnico se dirige a tu ubicación.', Colors.blue);
-          break;
-
-        case 'on_site':
-          _showStatusChangeFeedback('📍 Técnico ha llegado',
-              'El técnico está en tu ubicación.', Colors.orange);
-          break;
-
-        case 'charging':
-          _showStatusChangeFeedback(
-              '⚡ Servicio iniciado',
-              'El técnico ha comenzado la carga de tu vehículo.',
-              Colors.purple);
-          break;
-
-        case 'completed':
-          _showStatusChangeFeedback('🎉 Servicio completado',
-              '¡Tu vehículo ha sido cargado exitosamente!', Colors.green);
-          break;
-
         case 'cancelled':
-          _showStatusChangeFeedback('❌ Servicio cancelado',
-              'El servicio ha sido cancelado.', Colors.red);
+          title = '❌ Servicio cancelado';
+          message = 'Tu servicio ha sido cancelado.';
+          color = Colors.red;
+          isUrgentChange = true;
           _resetToIdle();
           break;
+        case 'completed':
+          title = '🎉 Servicio completado';
+          message = '¡Tu vehículo ha sido cargado exitosamente!';
+          color = Colors.green;
+          isUrgentChange = true;
+          break;
+        case 'en_route':
+          title = '🚗 Técnico en camino';
+          message = 'El técnico se dirige a tu ubicación.';
+          color = Colors.blue;
+          break;
+        case 'on_site':
+          title = '📍 Técnico ha llegado';
+          message = 'El técnico está en tu ubicación.';
+          color = Colors.orange;
+          isUrgentChange = true;
+          break;
+        case 'charging':
+          title = '⚡ Servicio iniciado';
+          message = 'El técnico ha comenzado la carga de tu vehículo.';
+          color = Colors.purple;
+          isUrgentChange = true;
+          break;
+      }
+
+      if (title.isNotEmpty) {
+        if (isUrgentChange &&
+            _lastBackgroundTime != null &&
+            DateTime.now().difference(_lastBackgroundTime!).inMinutes >= 2) {
+          // Si estuvo mucho tiempo en background y hay cambio urgente, mostrar diálogo
+          _showImportantNotificationOnResume(title, message, isUrgent: true);
+        } else {
+          // Notificación normal
+          _showStatusChangeFeedback(title, message, color);
+        }
       }
     }
-
     _lastKnownStatus = currentStatus;
+  }
+
+  void _showImportantNotificationOnResume(String title, String message,
+      {bool isUrgent = false}) {
+    // Usar notificación más prominente para cambios importantes
+    if (isUrgent) {
+      showDialog(
+        context: context,
+        barrierDismissible: false,
+        builder: (context) => AlertDialog(
+          shape:
+              RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+          title: Row(
+            children: [
+              Container(
+                padding: const EdgeInsets.all(8),
+                decoration: BoxDecoration(
+                  color: Colors.red.withOpacity(0.1),
+                  borderRadius: BorderRadius.circular(10),
+                ),
+                child: Icon(Icons.priority_high, color: Colors.red, size: 30),
+              ),
+              const SizedBox(width: 12),
+              Expanded(child: Text(title)),
+            ],
+          ),
+          content: Text(message),
+          actions: [
+            ElevatedButton(
+              onPressed: () => Navigator.of(context).pop(),
+              style: ElevatedButton.styleFrom(
+                backgroundColor: AppColors.primary,
+              ),
+              child: const Text('Entendido',
+                  style: TextStyle(color: Colors.white)),
+            ),
+          ],
+        ),
+      );
+    } else {
+      // Notificación normal
+      _showStatusChangeFeedback(title, message, AppColors.info);
+    }
+  }
+
+  // ✅ Verificación rápida
+  Future<void> _quickServiceCheck() async {
+    print('⚡ Realizando verificación rápida...');
+
+    try {
+      if (_hasActiveService && _activeRequest != null) {
+        final updatedRequest =
+            await ServiceRequestService.getRequestStatus(_activeRequest!.id);
+
+        if (updatedRequest.status != _lastKnownStatus) {
+          print(
+              '🔄 Estado del servicio cambió: ${_lastKnownStatus} → ${updatedRequest.status}');
+          _checkForStatusChanges(updatedRequest);
+          setState(() => _activeRequest = updatedRequest);
+        }
+
+        if (_passengerStatus == PassengerStatus.driverAssigned) {
+          await _updateCancellationTimeInfo();
+        }
+      }
+    } catch (e) {
+      print('⚠️ Error en verificación rápida: $e');
+    }
+  }
+
+  // ✅ Verificación completa
+  Future<void> _performFullCheck() async {
+    print('🔄 Realizando verificación completa al regresar...');
+
+    setState(() => _isLoading = true);
+
+    try {
+      final hasVehicle = await UserService.hasRegisteredVehicle();
+
+      if (!hasVehicle) {
+        print('⚠️ Usuario no tiene vehículo registrado');
+        setState(() {
+          _hasVehicleRegistered = false;
+          _isLoading = false;
+        });
+        _navigateToVehicleRegistration();
+        return;
+      }
+
+      setState(() => _hasVehicleRegistered = true);
+      await _checkForActiveServiceOnStartup();
+
+      if (_hasActiveService && _activeRequest != null) {
+        await _updateCancellationTimeInfo();
+        if (_passengerStatus == PassengerStatus.driverAssigned) {
+          _startCancellationTimer();
+        }
+      }
+
+      print('✅ Verificación completa terminada');
+    } catch (e) {
+      print('❌ Error en verificación completa: $e');
+      _showErrorMessage('Error al verificar el estado del servicio');
+    } finally {
+      setState(() => _isLoading = false);
+    }
+  }
+
+  Future<void> _handleAppResumed() async {
+    if (_lastBackgroundTime != null) {
+      final timeInBackground = DateTime.now().difference(_lastBackgroundTime!);
+      print('⏰ Tiempo en background: ${timeInBackground.inMinutes} minutos');
+
+      if (timeInBackground.inMinutes >= 1) {
+        await _performFullCheck();
+      } else {
+        await _quickServiceCheck();
+      }
+    }
   }
 
   void _startTrip() {
@@ -2038,8 +2605,102 @@ class _PassengerMapScreenState extends State<PassengerMapScreen>
     return null;
   }
 
+  // ✅ BUILD METHOD MODIFICADO para manejar la verificación
   @override
   Widget build(BuildContext context) {
+    // Si está verificando el vehículo, mostrar pantalla de carga
+    if (_isCheckingVehicle) {
+      return Scaffold(
+        body: Container(
+          decoration: BoxDecoration(
+            gradient: LinearGradient(
+              begin: Alignment.topCenter,
+              end: Alignment.bottomCenter,
+              colors: [
+                AppColors.primary.withOpacity(0.1),
+                Colors.white,
+              ],
+            ),
+          ),
+          child: Center(
+            child: Column(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                Container(
+                  padding: const EdgeInsets.all(24),
+                  decoration: BoxDecoration(
+                    color: Colors.white,
+                    borderRadius: BorderRadius.circular(20),
+                    boxShadow: [
+                      BoxShadow(
+                        color: Colors.black.withOpacity(0.1),
+                        blurRadius: 20,
+                        offset: const Offset(0, 10),
+                      ),
+                    ],
+                  ),
+                  child: Column(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      Container(
+                        width: 80,
+                        height: 80,
+                        decoration: BoxDecoration(
+                          color: AppColors.primary.withOpacity(0.1),
+                          shape: BoxShape.circle,
+                        ),
+                        child: Icon(
+                          Icons.directions_car,
+                          color: AppColors.primary,
+                          size: 40,
+                        ),
+                      ),
+                      const SizedBox(height: 20),
+                      Text(
+                        'Verificando tu vehículo',
+                        style: GoogleFonts.inter(
+                          fontSize: 20,
+                          fontWeight: FontWeight.bold,
+                          color: AppColors.textPrimary,
+                        ),
+                      ),
+                      const SizedBox(height: 8),
+                      Text(
+                        'Estamos verificando tu información...',
+                        style: GoogleFonts.inter(
+                          fontSize: 14,
+                          color: AppColors.textSecondary,
+                        ),
+                        textAlign: TextAlign.center,
+                      ),
+                      const SizedBox(height: 20),
+                      CircularProgressIndicator(
+                        valueColor:
+                            AlwaysStoppedAnimation<Color>(AppColors.primary),
+                      ),
+                    ],
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ),
+      );
+    }
+
+    // Si no tiene vehículo registrado, no mostrar nada (porque se mostrará el diálogo)
+    if (!_hasVehicleRegistered) {
+      return Scaffold(
+        body: Container(
+          color: AppColors.background,
+          child: const Center(
+            child: CircularProgressIndicator(),
+          ),
+        ),
+      );
+    }
+
+    // Código original del build method
     return Scaffold(
       body: Stack(
         children: [
@@ -2058,10 +2719,8 @@ class _PassengerMapScreenState extends State<PassengerMapScreen>
               bottom: _passengerStatus == PassengerStatus.idle ? 120 : 250,
             ),
           ),
-
           // UI Principal
           _buildMainUI(),
-
           // Loading Overlay
           if (_isLoading) _buildLoadingOverlay(),
         ],
@@ -2395,18 +3054,11 @@ class _PassengerMapScreenState extends State<PassengerMapScreen>
       child: Row(
         children: [
           // Logo o ícono de la app
-          Container(
-            width: 40,
-            height: 40,
-            decoration: BoxDecoration(
-              gradient: LinearGradient(
-                colors: [AppColors.primary, AppColors.brandBlue],
-              ),
-              borderRadius: BorderRadius.circular(10),
-            ),
-            child: Icon(Icons.electric_bolt, color: AppColors.accent, size: 24),
+          Image.asset(
+            'assets/images/logoapp.png', // Asegúrate de tener esta imagen en tus assets
+            height: 40, // Ajusta el tamaño según tu logo
           ),
-          const SizedBox(width: 12),
+          const SizedBox(width: 15),
 
           // Estado
           Expanded(
@@ -2439,30 +3091,34 @@ class _PassengerMapScreenState extends State<PassengerMapScreen>
   }
 
   String _getStatusTitle() {
+    final l10n = AppLocalizations.of(context);
+
     switch (_passengerStatus) {
       case PassengerStatus.idle:
-        return 'VoltGo';
+        return l10n.appTitle;
       case PassengerStatus.searching:
-        return 'Buscando técnico${'.' * _searchingDots}';
+        return '${l10n.searchingTechnician}${'.' * _searchingDots}';
       case PassengerStatus.driverAssigned:
-        return 'Técnico en camino';
+        return l10n.technicianArriving;
       case PassengerStatus.onTrip:
-        return 'Servicio en progreso';
+        return l10n.serviceInProgress;
       case PassengerStatus.completed:
-        return 'Servicio completado';
+        return l10n.serviceCompleted;
     }
   }
 
   String _getStatusSubtitle() {
+    final l10n = AppLocalizations.of(context);
+
     switch (_passengerStatus) {
       case PassengerStatus.searching:
-        return 'Encontrando el mejor técnico para ti';
+        return 'Finding the best technician for you';
       case PassengerStatus.driverAssigned:
-        return 'Llegada estimada: $_estimatedTime min';
+        return '${l10n.arrival}: $_estimatedTime ${l10n.minutes}';
       case PassengerStatus.onTrip:
-        return 'Cargando tu vehículo';
+        return l10n.chargingVehicle;
       case PassengerStatus.completed:
-        return 'Gracias por usar VoltGo';
+        return 'Thank you for using VoltGo';
       default:
         return '';
     }
@@ -3018,7 +3674,6 @@ class _PassengerMapScreenState extends State<PassengerMapScreen>
 
               const SizedBox(height: 20),
 
-              // ✅ Botones de acción - Actualizado con lógica de tiempo
               Row(
                 children: [
                   if (_canStillCancel)
@@ -3062,15 +3717,31 @@ class _PassengerMapScreenState extends State<PassengerMapScreen>
                     ),
                   const SizedBox(width: 12),
 
-                  // ✅ Botón de navegación (siempre disponible)
+                  // ✅ NUEVO: Botón de Chat
+                  Expanded(
+                    child: ElevatedButton.icon(
+                      icon: Icon(Icons.chat, size: 20),
+                      label: Text('Chat'),
+                      onPressed: _openChat, // ⬅️ MÉTODO NUEVO QUE CREAREMOS
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: AppColors.info,
+                        foregroundColor: Colors.white,
+                        minimumSize: const Size(0, 48),
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(12),
+                        ),
+                      ),
+                    ),
+                  ),
+                  const SizedBox(width: 8),
+
+                  // Botón de navegación (mantener el existente)
                   Expanded(
                     flex: 2,
                     child: ElevatedButton.icon(
                       icon: Icon(Icons.navigation, size: 20),
                       label: Text('Seguir en tiempo real'),
-                      onPressed:
-                          _openRealTimeTracking, // Sin paréntesis ni coma
-
+                      onPressed: _openRealTimeTracking,
                       style: ElevatedButton.styleFrom(
                         backgroundColor: AppColors.primary,
                         foregroundColor: Colors.white,
@@ -3155,6 +3826,48 @@ class _PassengerMapScreenState extends State<PassengerMapScreen>
     } catch (e) {
       print('Error refreshing service data: $e');
     }
+  }
+
+  void _openChat() async {
+    if (_activeRequest == null) {
+      _showErrorSnackbar('No hay servicio activo');
+      return;
+    }
+
+    HapticFeedback.lightImpact();
+
+    // Verificar si el chat está disponible
+    final canChat = await ChatService.canChatForService(_activeRequest!.id);
+
+    if (!canChat) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Row(
+            children: [
+              Icon(Icons.info_outline, color: Colors.white),
+              const SizedBox(width: 12),
+              Text('El chat no está disponible para este servicio'),
+            ],
+          ),
+          backgroundColor: AppColors.warning,
+          behavior: SnackBarBehavior.floating,
+          shape:
+              RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+        ),
+      );
+      return;
+    }
+
+    // Navegar a la pantalla de chat
+    Navigator.push(
+      context,
+      MaterialPageRoute(
+        builder: (context) => ServiceChatScreen(
+          serviceRequest: _activeRequest!,
+          userType: 'user', // Siempre 'user' en PassengerMapScreen
+        ),
+      ),
+    );
   }
 
 // Widget para el banner de estado

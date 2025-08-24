@@ -129,21 +129,30 @@ class _AddVehicleScreenState extends State<AddVehicleScreen>
     }
   }
 
-  // ✅ Lógica de validación actualizada para 'Otro'
   bool _validateCurrentStep() {
-    // La validación del Form ahora maneja los campos de texto.
-    // Aquí solo validamos las selecciones que no son campos de texto.
     switch (_currentStep) {
-      case 0:
-        return _formKey.currentState?.validate() ?? false;
-      case 1:
-        final isColorSelected = _selectedColor != null;
-        return isColorSelected && (_formKey.currentState?.validate() ?? false);
-      case 2:
+      case 0: // Paso 1: Marca, Modelo, Año
+        return _makeController.text.trim().isNotEmpty &&
+            _modelController.text.trim().isNotEmpty &&
+            _yearController.text.trim().isNotEmpty &&
+            _isValidYear(_yearController.text.trim());
+      case 1: // Paso 2: Placa y Color
+        return _plateController.text.trim().isNotEmpty &&
+            _selectedColor != null &&
+            (_selectedColor != 'Otro' ||
+                _colorController.text.trim().isNotEmpty);
+      case 2: // Paso 3: Conector
         return _selectedConnectorType != null;
       default:
         return false;
     }
+  }
+
+  bool _isValidYear(String yearText) {
+    final year = int.tryParse(yearText);
+    if (year == null) return false;
+    final currentYear = DateTime.now().year;
+    return year >= 1990 && year <= currentYear + 1;
   }
 
   // ✅ Lógica de envío actualizada
@@ -366,16 +375,30 @@ class _AddVehicleScreenState extends State<AddVehicleScreen>
     );
   }
 
-  // ✅ MÉTODO ACTUALIZADO
+// ✅ CORREGIR _buildStep1() - Agregar listeners para actualizar estado
   Widget _buildStep1() {
     return SingleChildScrollView(
       padding: const EdgeInsets.all(24),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          const Text('Información del Vehículo'),
+          const Text(
+            'Información del Vehículo',
+            style: TextStyle(
+              fontSize: 18,
+              fontWeight: FontWeight.bold,
+              color: AppColors.textPrimary,
+            ),
+          ),
           const SizedBox(height: 24),
-          const Text('Marca'),
+          const Text(
+            'Marca',
+            style: TextStyle(
+              fontSize: 14,
+              fontWeight: FontWeight.w500,
+              color: AppColors.textPrimary,
+            ),
+          ),
           const SizedBox(height: 12),
           Wrap(
             spacing: 8,
@@ -427,6 +450,10 @@ class _AddVehicleScreenState extends State<AddVehicleScreen>
                 borderSide: BorderSide.none,
               ),
             ),
+            // ✅ AGREGAR onChanged para actualizar estado
+            onChanged: (value) {
+              setState(() {}); // Reactualizar para habilitar/deshabilitar botón
+            },
             validator: (value) {
               if (value == null || value.trim().isEmpty) {
                 return 'Por favor, selecciona o ingresa una marca';
@@ -458,14 +485,21 @@ class _AddVehicleScreenState extends State<AddVehicleScreen>
     );
   }
 
-  // ✅ MÉTODO ACTUALIZADO
+// ✅ CORREGIR _buildStep2() - Agregar listeners
   Widget _buildStep2() {
     return SingleChildScrollView(
       padding: const EdgeInsets.all(24),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          const Text('Identificación'),
+          const Text(
+            'Identificación',
+            style: TextStyle(
+              fontSize: 18,
+              fontWeight: FontWeight.bold,
+              color: AppColors.textPrimary,
+            ),
+          ),
           const SizedBox(height: 24),
           _buildEnhancedTextField(
             controller: _plateController,
@@ -475,7 +509,14 @@ class _AddVehicleScreenState extends State<AddVehicleScreen>
             textCapitalization: TextCapitalization.characters,
           ),
           const SizedBox(height: 24),
-          const Text('Color'),
+          const Text(
+            'Color',
+            style: TextStyle(
+              fontSize: 14,
+              fontWeight: FontWeight.w500,
+              color: AppColors.textPrimary,
+            ),
+          ),
           const SizedBox(height: 12),
           GridView.builder(
             shrinkWrap: true,
@@ -513,16 +554,22 @@ class _AddVehicleScreenState extends State<AddVehicleScreen>
                     child: Column(
                       mainAxisAlignment: MainAxisAlignment.center,
                       children: [
-                        Icon(colorData['icon'],
+                        Icon(
+                          colorData['icon'],
+                          color: isSelected
+                              ? AppColors.primary
+                              : AppColors.textSecondary,
+                        ),
+                        const SizedBox(height: 4),
+                        Text(
+                          'Otro',
+                          style: TextStyle(
+                            fontSize: 12,
                             color: isSelected
                                 ? AppColors.primary
-                                : AppColors.textSecondary),
-                        const SizedBox(height: 4),
-                        Text('Otro',
-                            style: TextStyle(
-                                color: isSelected
-                                    ? AppColors.primary
-                                    : AppColors.textSecondary)),
+                                : AppColors.textSecondary,
+                          ),
+                        ),
                       ],
                     ),
                   ),
@@ -559,11 +606,15 @@ class _AddVehicleScreenState extends State<AddVehicleScreen>
                         ),
                       ),
                       const SizedBox(height: 4),
-                      Text(colorData['name'],
-                          style: TextStyle(
-                              color: isSelected
-                                  ? AppColors.primary
-                                  : AppColors.textSecondary)),
+                      Text(
+                        colorData['name'],
+                        style: TextStyle(
+                          fontSize: 12,
+                          color: isSelected
+                              ? AppColors.primary
+                              : AppColors.textSecondary,
+                        ),
+                      ),
                     ],
                   ),
                 ),
@@ -579,7 +630,8 @@ class _AddVehicleScreenState extends State<AddVehicleScreen>
               hint: 'Ej: Dorado, Morado',
               icon: Icons.color_lens_outlined,
               validator: (value) {
-                if (value == null || value.trim().isEmpty) {
+                if (_selectedColor == 'Otro' &&
+                    (value == null || value.trim().isEmpty)) {
                   return 'Ingresa un color';
                 }
                 return null;
@@ -643,6 +695,7 @@ class _AddVehicleScreenState extends State<AddVehicleScreen>
     );
   }
 
+// ✅ CORREGIR _buildEnhancedTextField() - Agregar onChanged por defecto
   Widget _buildEnhancedTextField({
     required TextEditingController controller,
     required String label,
@@ -656,13 +709,24 @@ class _AddVehicleScreenState extends State<AddVehicleScreen>
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Text(label),
+        Text(
+          label,
+          style: const TextStyle(
+            fontSize: 14,
+            fontWeight: FontWeight.w500,
+            color: AppColors.textPrimary,
+          ),
+        ),
         const SizedBox(height: 8),
         TextFormField(
           controller: controller,
           keyboardType: keyboardType,
           inputFormatters: inputFormatters,
           textCapitalization: textCapitalization,
+          // ✅ AGREGAR onChanged para actualizar estado
+          onChanged: (value) {
+            setState(() {}); // Reactualizar para habilitar/deshabilitar botón
+          },
           decoration: InputDecoration(
             hintText: hint,
             prefixIcon: Icon(icon, color: AppColors.primary),
@@ -672,17 +736,32 @@ class _AddVehicleScreenState extends State<AddVehicleScreen>
               borderRadius: BorderRadius.circular(12),
               borderSide: BorderSide(color: AppColors.gray300),
             ),
+            focusedBorder: OutlineInputBorder(
+              borderRadius: BorderRadius.circular(12),
+              borderSide: BorderSide(color: AppColors.primary, width: 2),
+            ),
+            errorBorder: OutlineInputBorder(
+              borderRadius: BorderRadius.circular(12),
+              borderSide: BorderSide(color: AppColors.error),
+            ),
           ),
           validator: validator ??
               (value) {
-                if (value == null || value.isEmpty) {
+                if (value == null || value.trim().isEmpty) {
                   return 'Este campo es requerido';
                 }
                 if (label == 'Año') {
                   final year = int.tryParse(value);
-                  if (year == null || year > DateTime.now().year + 1) {
-                    return 'Ingresa un año válido';
+                  if (year == null) {
+                    return 'Ingresa solo números';
                   }
+                  final currentYear = DateTime.now().year;
+                  if (year < 1990 || year > currentYear + 1) {
+                    return 'Año debe estar entre 1990 y ${currentYear + 1}';
+                  }
+                }
+                if (label == 'Placa' && value.trim().length < 3) {
+                  return 'La placa debe tener al menos 3 caracteres';
                 }
                 return null;
               },
@@ -691,6 +770,44 @@ class _AddVehicleScreenState extends State<AddVehicleScreen>
     );
   }
 
+// ✅ AGREGAR método para mensajes de validación específicos
+  String _getValidationMessage() {
+    switch (_currentStep) {
+      case 0:
+        if (_makeController.text.trim().isEmpty) {
+          return 'Por favor selecciona una marca';
+        }
+        if (_modelController.text.trim().isEmpty) {
+          return 'Por favor ingresa el modelo';
+        }
+        if (_yearController.text.trim().isEmpty) {
+          return 'Por favor ingresa el año';
+        }
+        if (!_isValidYear(_yearController.text.trim())) {
+          return 'Por favor ingresa un año válido';
+        }
+        break;
+      case 1:
+        if (_plateController.text.trim().isEmpty) {
+          return 'Por favor ingresa la placa';
+        }
+        if (_selectedColor == null) {
+          return 'Por favor selecciona un color';
+        }
+        if (_selectedColor == 'Otro' && _colorController.text.trim().isEmpty) {
+          return 'Por favor especifica el color';
+        }
+        break;
+      case 2:
+        if (_selectedConnectorType == null) {
+          return 'Por favor selecciona el tipo de conector';
+        }
+        break;
+    }
+    return 'Por favor completa todos los campos requeridos';
+  }
+
+// ✅ CORREGIR _buildActions() - Cambiar lógica del botón
   Widget _buildActions() {
     return Container(
       padding: const EdgeInsets.all(24),
@@ -724,10 +841,25 @@ class _AddVehicleScreenState extends State<AddVehicleScreen>
           Expanded(
             flex: _currentStep == 0 ? 1 : 2,
             child: ElevatedButton(
-              onPressed:
-                  _isLoading || !_validateCurrentStep() ? null : _nextStep,
+              // ✅ CAMBIAR LÓGICA: Solo verificar si está cargando
+              onPressed: _isLoading
+                  ? null
+                  : () {
+                      // Validar solo antes de ejecutar la acción
+                      if (_validateCurrentStep()) {
+                        _nextStep();
+                      } else {
+                        // Mostrar mensaje si no es válido
+                        ScaffoldMessenger.of(context).showSnackBar(
+                          SnackBar(
+                            content: Text(_getValidationMessage()),
+                            backgroundColor: AppColors.warning,
+                            behavior: SnackBarBehavior.floating,
+                          ),
+                        );
+                      }
+                    },
               style: ElevatedButton.styleFrom(
-                // ✅ CAMBIO AQUÍ: Se cambió de AppColors.primary a AppColors.brandBlue
                 backgroundColor: AppColors.brandBlue,
                 disabledBackgroundColor: AppColors.gray300,
                 padding: const EdgeInsets.symmetric(vertical: 14),

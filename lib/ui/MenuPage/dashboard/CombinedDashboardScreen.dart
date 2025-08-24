@@ -1,3 +1,4 @@
+import 'package:Voltgo_User/ui/color/app_colors.dart';
 import 'package:flutter/material.dart';
 import 'package:intl/date_symbol_data_local.dart';
 import 'package:intl/intl.dart';
@@ -193,10 +194,6 @@ class _CombinedDashboardScreenState extends State<CombinedDashboardScreen> {
       ),
     );
   }
-}
-
-class AppColors {
-  static const Color primary = Color(0xFF00636A);
 }
 
 class MetricCard extends StatelessWidget {

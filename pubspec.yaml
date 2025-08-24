@@ -12,6 +12,8 @@ dependencies:
   flutter:
     sdk: flutter
   
+  flutter_localizations:
+    sdk: flutter
   # Iconos de estilo iOS
   cupertino_icons: ^1.0.8
 
@@ -43,8 +45,6 @@ dependencies:
   firebase_core: ^2.15.0
   clipboard: ^0.1.3
   flutter_chat_bubble: ^2.0.2
-
-
   firebase_auth: ^4.8.0
   lottie: ^3.1.2 # O la versión más reciente
   firebase_messaging: ^14.7.10
@@ -61,11 +61,6 @@ dev_dependencies:
     sdk: flutter
   flutter_lints: ^4.0.0 # Se actualizó a la versión más reciente
   
-  # --- INICIO DE LA CORRECCIÓN ---
-  # El paquete del splash screen va en dev_dependencies
-  flutter_native_splash: ^2.4.0 # Se actualizó a la versión más reciente
-  # --- FIN DE LA CORRECCIÓN ---
-
 
 flutter:
   uses-material-design: true
@@ -79,24 +74,4 @@ flutter:
     # - assets/images/logo_w.png
     # - assets/images/splash_background.png
     # - assets.images/backbtn.png
-    
-# --- INICIO DE LA CORRECCIÓN ---
-# Añade esta sección completa al final de tu archivo.
-# Asegúrate de que no esté dentro de la sección 'flutter:'.
-flutter_native_splash:
-  # El color de fondo es un respaldo, pero la imagen lo cubrirá todo.
-  color: "#008C95"
-  
-  # Usamos 'background_image' para la imagen de pantalla completa.
-  background_image: assets/images/inicio.png
-
-  # Para Android 12 y superior, el sistema fuerza un ícono central.
-  # No soporta imágenes de fondo, así que aquí mantenemos el logo central.
-  android_12:
-    color: "#008C95"
-    image: assets/images/logoApp.png # Tu logo para el centro
-
-  # Cómo se ajusta la imagen en plataformas que lo soportan.
-  android_gravity: fill
-  ios_content_mode: scaleAspectFill
-# --- FIN DE LA CORRECCIÓN ---
+     

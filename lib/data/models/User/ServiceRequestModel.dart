@@ -72,6 +72,12 @@ class ServiceRequestModel {
       'user': user?.toJson(),
     };
   }
+
+  // ✅ NUEVO MÉTODO: Para verificar si el chat está disponible
+  bool canChat() {
+    // Solo puede chatear cuando el servicio está activo (aceptado hasta completado)
+    return ['accepted', 'en_route', 'on_site', 'charging'].contains(status);
+  }
 }
 
 class TechnicianData {
