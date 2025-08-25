@@ -359,22 +359,24 @@ class _PassengerMapScreenState extends State<PassengerMapScreen>
   void _loadTechnicianData(ServiceRequestModel request) {
     final technicianData = request.technician;
     final technicianProfile = technicianData?.profile;
-    final vehicle = technicianProfile?.vehicleDetails;
 
     setState(() {
       _driverName = technicianData?.name ?? 'Técnico';
-      _driverRating =
-          technicianProfile?.averageRating?.toStringAsFixed(1) ?? '5.0';
+      _driverRating = double.tryParse(technicianProfile?.averageRating ?? '5.0')
+              ?.toStringAsFixed(1) ??
+          '5.0';
 
-      // ✅ CORREGIDO: Construcción segura del string del vehículo
-      _vehicleInfo = vehicle != null
-          ? '${vehicle.make ?? ''} ${vehicle.model ?? ''} (${vehicle.plate ?? ''})'
-          : 'Vehículo de servicio';
+      // ✅ NUEVO: Usar el método vehicleDescription del modelo actualizado
+      _vehicleInfo =
+          technicianProfile?.vehicleDescription ?? 'Vehículo de servicio';
+
+      // ✅ ALTERNATIVA: Si quieres construir manualmente el string del vehículo
+      // _vehicleInfo = _buildVehicleInfo(technicianProfile);
 
       // ✅ CORREGIDO: Acceso seguro al tipo de conector
       _connectorType =
           technicianProfile?.availableConnectors?.isNotEmpty == true
-              ? technicianProfile!.availableConnectors!.first
+              ? technicianProfile!.availableConnectors!
               : 'No especificado';
 
       // Agregar o actualizar el marcador del técnico si hay ubicación
@@ -382,12 +384,49 @@ class _PassengerMapScreenState extends State<PassengerMapScreen>
           technicianProfile?.currentLng != null) {
         final driverId =
             'driver_${technicianData?.id ?? request.technicianId ?? 0}';
-        _logic.updateDriverMarker(
-          driverId,
-          LatLng(technicianProfile!.currentLat!, technicianProfile.currentLng!),
-        );
+
+        // ✅ CONVERSIÓN SEGURA DE STRING A DOUBLE
+        final lat = double.tryParse(technicianProfile!.currentLat!);
+        final lng = double.tryParse(technicianProfile.currentLng!);
+
+        if (lat != null && lng != null) {
+          _logic.updateDriverMarker(
+            driverId,
+            LatLng(lat, lng),
+          );
+        }
       }
     });
+  }
+
+// ✅ MÉTODO HELPER ALTERNATIVO para construir info del vehículo manualmente
+  String _buildVehicleInfo(TechnicianProfile? profile) {
+    if (profile?.vehicleDetails == null || profile!.vehicleDetails!.isEmpty) {
+      return 'Vehículo de servicio';
+    }
+
+    final parts = <String>[];
+
+    // Usar los getters del modelo actualizado
+    if (profile.vehicleMake?.isNotEmpty == true) {
+      parts.add(profile.vehicleMake!);
+    }
+
+    if (profile.vehicleModel?.isNotEmpty == true) {
+      parts.add(profile.vehicleModel!);
+    }
+
+    if (profile.vehiclePlate?.isNotEmpty == true) {
+      parts.add('(${profile.vehiclePlate!})');
+    }
+
+    return parts.isNotEmpty ? parts.join(' ') : 'Vehículo de servicio';
+  }
+
+// ✅ MÉTODO HELPER para obtener detalles específicos del vehículo
+  String _getVehicleDetail(
+      TechnicianProfile? profile, String key, String defaultValue) {
+    return profile?.vehicleDetails?[key]?.toString() ?? defaultValue;
   }
 
   void _startTechnicianLocationTracking() {
@@ -1491,29 +1530,65 @@ class _PassengerMapScreenState extends State<PassengerMapScreen>
           setState(() {
             _activeRequest = updatedRequest;
             _passengerStatus = PassengerStatus.driverAssigned;
-            final vehicle = technicianProfile?.vehicleDetails;
+
             _driverName = technicianData?.name ?? 'Técnico';
+
+            // ✅ CORREGIDO: Parsing seguro del rating
             _driverRating =
-                technicianProfile?.averageRating?.toStringAsFixed(1) ?? '5.0';
-            _vehicleInfo = vehicle != null
-                ? '${vehicle.make ?? ''} ${vehicle.model ?? ''} (${vehicle.plate ?? ''})'
-                : 'Vehículo de servicio';
+                double.tryParse(technicianProfile?.averageRating ?? '5.0')
+                        ?.toStringAsFixed(1) ??
+                    '5.0';
+
+            // ✅ CORREGIDO: Usar el getter vehicleDescription del modelo actualizado
+            _vehicleInfo =
+                technicianProfile?.vehicleDescription ?? 'Vehículo de servicio';
+
+            // ✅ ALTERNATIVA: Si quieres usar los getters específicos
+            // _vehicleInfo = _buildVehicleInfoFromProfile(technicianProfile);
+
+            // ✅ CORREGIDO: Acceso seguro al availableConnectors
             _connectorType =
                 technicianProfile?.availableConnectors?.isNotEmpty == true
-                    ? technicianProfile!.availableConnectors!.first
+                    ? technicianProfile!.availableConnectors!
                     : 'No especificado';
 
+            // ✅ CORREGIDO: Conversión segura de coordenadas String a double
             if (technicianProfile?.currentLat != null &&
                 technicianProfile?.currentLng != null) {
               final driverId =
                   'driver_${technicianData?.id ?? updatedRequest.technicianId ?? 0}';
-              _logic.updateDriverMarker(
-                driverId,
-                LatLng(technicianProfile!.currentLat!,
-                    technicianProfile.currentLng!),
-              );
+
+              final lat = double.tryParse(technicianProfile!.currentLat!);
+              final lng = double.tryParse(technicianProfile.currentLng!);
+
+              if (lat != null && lng != null) {
+                _logic.updateDriverMarker(
+                  driverId,
+                  LatLng(lat, lng),
+                );
+              }
             }
           });
+
+// ✅ MÉTODO HELPER ALTERNATIVO para construir info del vehículo
+          String _buildVehicleInfoFromProfile(TechnicianProfile? profile) {
+            if (profile?.vehicleDetails == null ||
+                profile!.vehicleDetails!.isEmpty) {
+              return 'Vehículo de servicio';
+            }
+
+            final make = profile.vehicleMake ?? '';
+            final model = profile.vehicleModel ?? '';
+            final plate = profile.vehiclePlate ?? '';
+
+            final parts = <String>[];
+            if (make.isNotEmpty) parts.add(make);
+            if (model.isNotEmpty) parts.add(model);
+            if (plate.isNotEmpty) parts.add('($plate)');
+
+            return parts.isNotEmpty ? parts.join(' ') : 'Vehículo de servicio';
+          }
+
           HapticFeedback.heavyImpact();
           _startTechnicianLocationTracking();
         }
@@ -3674,86 +3749,92 @@ class _PassengerMapScreenState extends State<PassengerMapScreen>
 
               const SizedBox(height: 20),
 
-              Row(
+              // Widget que contiene las acciones (Cancel, Chat, Track)
+              Column(
+                crossAxisAlignment: CrossAxisAlignment
+                    .stretch, // Asegura que los hijos ocupen todo el ancho
                 children: [
-                  if (_canStillCancel)
-                    Expanded(
-                      child: OutlinedButton(
-                        onPressed: _cancelActiveService,
-                        style: OutlinedButton.styleFrom(
-                          minimumSize: const Size(0, 48),
-                          side: BorderSide(color: AppColors.error),
-                          shape: RoundedRectangleBorder(
-                            borderRadius: BorderRadius.circular(12),
-                          ),
-                        ),
-                        child: Text(
-                          'Cancelar',
-                          style: GoogleFonts.inter(
-                              color: AppColors.error,
-                              fontWeight: FontWeight.w600),
-                        ),
-                      ),
-                    )
-                  else
-                    Expanded(
-                      child: Container(
-                        padding: const EdgeInsets.all(12),
-                        decoration: BoxDecoration(
-                          color: Colors.grey.withOpacity(0.1),
-                          borderRadius: BorderRadius.circular(12),
-                          border:
-                              Border.all(color: Colors.grey.withOpacity(0.3)),
-                        ),
-                        child: Text(
-                          'Ya no es posible cancelar',
-                          textAlign: TextAlign.center,
-                          style: GoogleFonts.inter(
-                            color: Colors.grey.shade600,
-                            fontSize: 14,
-                          ),
-                        ),
-                      ),
+                  ElevatedButton.icon(
+                    icon: const Icon(
+                      Icons.navigation,
+                      size: 20,
+                      color: Colors.white,
                     ),
-                  const SizedBox(width: 12),
-
-                  // ✅ NUEVO: Botón de Chat
-                  Expanded(
-                    child: ElevatedButton.icon(
-                      icon: Icon(Icons.chat, size: 20),
-                      label: Text('Chat'),
-                      onPressed: _openChat, // ⬅️ MÉTODO NUEVO QUE CREAREMOS
-                      style: ElevatedButton.styleFrom(
-                        backgroundColor: AppColors.info,
-                        foregroundColor: Colors.white,
-                        minimumSize: const Size(0, 48),
-                        shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(12),
-                        ),
+                    label: const Text('Seguir en tiempo real'),
+                    onPressed: _openRealTimeTracking,
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: AppColors.primary,
+                      foregroundColor: Colors.white,
+                      padding: const EdgeInsets.symmetric(vertical: 14),
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(12),
+                      ),
+                      textStyle: GoogleFonts.inter(
+                        fontWeight: FontWeight.bold,
+                        fontSize: 16,
                       ),
                     ),
                   ),
-                  const SizedBox(width: 8),
+                  const SizedBox(height: 12),
 
-                  // Botón de navegación (mantener el existente)
-                  Expanded(
-                    flex: 2,
-                    child: ElevatedButton.icon(
-                      icon: Icon(Icons.navigation, size: 20),
-                      label: Text('Seguir en tiempo real'),
-                      onPressed: _openRealTimeTracking,
-                      style: ElevatedButton.styleFrom(
-                        backgroundColor: AppColors.primary,
-                        foregroundColor: Colors.white,
-                        minimumSize: const Size(0, 48),
-                        shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(12),
+                  // 2. Fila para Acciones Secundarias (Cancelar y Chat)
+                  // Agrupamos las acciones de menor prioridad en una fila separada.
+                  Row(
+                    children: [
+                      // Botón de Cancelar (ahora usa el estado `disabled` nativo)
+                      Expanded(
+                        child: OutlinedButton(
+                          onPressed:
+                              _canStillCancel ? _cancelActiveService : null,
+                          style: OutlinedButton.styleFrom(
+                            foregroundColor: AppColors.error,
+                            side: BorderSide(
+                              color: _canStillCancel
+                                  ? AppColors.error
+                                  : Colors.grey.shade400,
+                            ),
+                            padding: const EdgeInsets.symmetric(vertical: 14),
+                            shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(12),
+                            ),
+                            textStyle: GoogleFonts.inter(
+                              fontWeight: FontWeight.w600,
+                              fontSize: 16,
+                            ),
+                          ),
+                          child: const Text('Cancelar'),
                         ),
                       ),
-                    ),
+                      const SizedBox(width: 12),
+
+                      // Botón de Chat
+                      Expanded(
+                        child: ElevatedButton.icon(
+                          icon: const Icon(
+                            Icons.chat,
+                            size: 20,
+                            color: Colors.white,
+                          ),
+                          label: const Text('Chat'),
+                          onPressed: _openChat,
+                          style: ElevatedButton.styleFrom(
+                            backgroundColor: Colors.lightGreen,
+                            foregroundColor: Colors.white,
+                            padding: const EdgeInsets.symmetric(vertical: 14),
+                            shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(12),
+                            ),
+                            textStyle: GoogleFonts.inter(
+                              fontWeight: FontWeight.w600,
+                              fontSize: 16,
+                            ),
+                          ),
+                        ),
+                      ),
+                    ],
                   ),
                 ],
-              ),
+              )
             ],
           ),
         ),
@@ -3835,28 +3916,6 @@ class _PassengerMapScreenState extends State<PassengerMapScreen>
     }
 
     HapticFeedback.lightImpact();
-
-    // Verificar si el chat está disponible
-    final canChat = await ChatService.canChatForService(_activeRequest!.id);
-
-    if (!canChat) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Row(
-            children: [
-              Icon(Icons.info_outline, color: Colors.white),
-              const SizedBox(width: 12),
-              Text('El chat no está disponible para este servicio'),
-            ],
-          ),
-          backgroundColor: AppColors.warning,
-          behavior: SnackBarBehavior.floating,
-          shape:
-              RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-        ),
-      );
-      return;
-    }
 
     // Navegar a la pantalla de chat
     Navigator.push(

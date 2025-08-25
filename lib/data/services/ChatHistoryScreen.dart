@@ -1,4 +1,4 @@
-// ✅ PANTALLA DE HISTORIAL DE CHATS
+// ✅ PANTALLA DE HISTORIAL DE CHATS - CORREGIDA
 // Archivo: lib/ui/chat/ChatHistoryScreen.dart
 
 import 'package:Voltgo_User/data/models/User/ServiceRequestModel.dart';
@@ -56,12 +56,10 @@ class _ChatHistoryScreenState extends State<ChatHistoryScreen>
 
     try {
       final history = await ChatService.getUserChatHistory();
-
       setState(() {
         _chatHistory = history;
         _isLoading = false;
       });
-
       print('✅ Historial de chats cargado: ${history.length} conversaciones');
     } catch (e) {
       setState(() {
@@ -77,35 +75,25 @@ class _ChatHistoryScreenState extends State<ChatHistoryScreen>
     _refreshController.forward().then((_) {
       _refreshController.reverse();
     });
-
     await _loadChatHistory();
   }
 
   void _openChat(ChatHistoryItem chatItem) {
     HapticFeedback.lightImpact();
 
-    // Crear un ServiceRequestModel básico para la navegación
+    // ✅ VERSIÓN ULTRA SIMPLE - Solo los campos esenciales
     final serviceRequest = ServiceRequestModel(
       id: chatItem.serviceId,
-      userId: chatItem.userType == 'user' ? 0 : chatItem.otherParticipant.id,
-      status: chatItem.serviceStatus,
-      requestLat: 0.0, // No necesario para el chat
-      requestLng: 0.0, // No necesario para el chat
-      requestedAt: chatItem.serviceDate,
-      technician: chatItem.userType == 'user'
-          ? TechnicianData(
-              id: chatItem.otherParticipant.id,
-              name: chatItem.otherParticipant.name,
-              email: chatItem.otherParticipant.email,
-            )
-          : null,
-      user: chatItem.userType == 'technician'
-          ? UserData(
-              id: chatItem.otherParticipant.id,
-              name: chatItem.otherParticipant.name,
-              email: chatItem.otherParticipant.email,
-            )
-          : null,
+      userId: 0, // No importa para el chat
+      status: 'accepted',
+      requestLat: 0.0,
+      requestLng: 0.0,
+      requestedAt: DateTime.now(), // ✅ CORRECCIÓN: Usar DateTime directamente
+      // ✅ DEJAR NULLS - No necesarios para el chat básico
+      technician: null,
+      user: null,
+      technicianId: chatItem.otherParticipant?.id,
+      // Agregar cualquier otro campo requerido como null o valor por defecto
     );
 
     Navigator.push(
@@ -113,11 +101,10 @@ class _ChatHistoryScreenState extends State<ChatHistoryScreen>
       MaterialPageRoute(
         builder: (context) => ServiceChatScreen(
           serviceRequest: serviceRequest,
-          userType: chatItem.userType,
+          userType: 'user',
         ),
       ),
     ).then((_) {
-      // Refrescar la lista cuando regrese del chat
       _loadChatHistory();
     });
   }
@@ -367,9 +354,9 @@ class _ChatHistoryScreenState extends State<ChatHistoryScreen>
                   ),
                   child: Center(
                     child: Text(
-                      chatItem.otherParticipant.name.isNotEmpty
-                          ? chatItem.otherParticipant.name[0].toUpperCase()
-                          : (chatItem.userType == 'user' ? 'T' : 'C'),
+                      chatItem.otherParticipant?.name.isNotEmpty == true
+                          ? chatItem.otherParticipant!.name[0].toUpperCase()
+                          : 'U',
                       style: GoogleFonts.inter(
                         fontSize: 18,
                         fontWeight: FontWeight.bold,
@@ -378,84 +365,36 @@ class _ChatHistoryScreenState extends State<ChatHistoryScreen>
                     ),
                   ),
                 ),
-
                 const SizedBox(width: 12),
-
                 // Información del chat
                 Expanded(
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      // Nombre y badge de estado
-                      Row(
-                        children: [
-                          Expanded(
-                            child: Text(
-                              chatItem.otherParticipant.name,
-                              style: GoogleFonts.inter(
-                                fontSize: 16,
-                                fontWeight: FontWeight.w600,
-                                color: AppColors.textPrimary,
-                              ),
-                              maxLines: 1,
-                              overflow: TextOverflow.ellipsis,
-                            ),
-                          ),
-                          Container(
-                            padding: const EdgeInsets.symmetric(
-                              horizontal: 8,
-                              vertical: 2,
-                            ),
-                            decoration: BoxDecoration(
-                              color: _getStatusColor(chatItem.serviceStatus)
-                                  .withOpacity(0.2),
-                              borderRadius: BorderRadius.circular(12),
-                            ),
-                            child: Text(
-                              chatItem.getStatusText(),
-                              style: GoogleFonts.inter(
-                                fontSize: 10,
-                                fontWeight: FontWeight.w600,
-                                color: _getStatusColor(chatItem.serviceStatus),
-                              ),
-                            ),
-                          ),
-                        ],
+                      // Nombre
+                      Text(
+                        chatItem.otherParticipant?.name ?? 'Usuario',
+                        style: GoogleFonts.inter(
+                          fontSize: 16,
+                          fontWeight: FontWeight.w600,
+                          color: AppColors.textPrimary,
+                        ),
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
                       ),
-
                       const SizedBox(height: 4),
-
-                      // Último mensaje o estado
-                      Row(
-                        children: [
-                          Expanded(
-                            child: Text(
-                              chatItem.lastMessage?.message ?? 'Sin mensajes',
-                              style: GoogleFonts.inter(
-                                fontSize: 13,
-                                color: chatItem.unreadCount > 0
-                                    ? AppColors.textPrimary
-                                    : AppColors.textSecondary,
-                                fontWeight: chatItem.unreadCount > 0
-                                    ? FontWeight.w500
-                                    : FontWeight.normal,
-                              ),
-                              maxLines: 1,
-                              overflow: TextOverflow.ellipsis,
-                            ),
-                          ),
-                          Text(
-                            chatItem.getTimeAgo(),
-                            style: GoogleFonts.inter(
-                              fontSize: 12,
-                              color: AppColors.textSecondary,
-                            ),
-                          ),
-                        ],
+                      // Último mensaje
+                      Text(
+                        chatItem.lastMessage?.message ?? 'Sin mensajes',
+                        style: GoogleFonts.inter(
+                          fontSize: 13,
+                          color: AppColors.textSecondary,
+                          fontWeight: FontWeight.normal,
+                        ),
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
                       ),
-
                       const SizedBox(height: 4),
-
                       // Información del servicio
                       Row(
                         children: [
@@ -472,54 +411,25 @@ class _ChatHistoryScreenState extends State<ChatHistoryScreen>
                               color: AppColors.textSecondary,
                             ),
                           ),
+                          const Spacer(),
+                          Text(
+                            chatItem.serviceDate,
+                            style: GoogleFonts.inter(
+                              fontSize: 11,
+                              color: AppColors.textSecondary,
+                            ),
+                          ),
                         ],
                       ),
                     ],
                   ),
                 ),
-
                 const SizedBox(width: 8),
-
-                // Indicadores
-                Column(
-                  children: [
-                    // Badge de mensajes no leídos
-                    if (chatItem.unreadCount > 0)
-                      Container(
-                        padding: const EdgeInsets.symmetric(
-                          horizontal: 8,
-                          vertical: 4,
-                        ),
-                        decoration: BoxDecoration(
-                          color: AppColors.error,
-                          borderRadius: BorderRadius.circular(12),
-                        ),
-                        child: Text(
-                          chatItem.unreadCount > 99
-                              ? '99+'
-                              : chatItem.unreadCount.toString(),
-                          style: GoogleFonts.inter(
-                            fontSize: 11,
-                            fontWeight: FontWeight.bold,
-                            color: Colors.white,
-                          ),
-                        ),
-                      ),
-
-                    const SizedBox(height: 8),
-
-                    // Indicador de chat disponible
-                    Container(
-                      width: 8,
-                      height: 8,
-                      decoration: BoxDecoration(
-                        color: chatItem.canChat
-                            ? AppColors.success
-                            : Colors.grey.shade400,
-                        shape: BoxShape.circle,
-                      ),
-                    ),
-                  ],
+                // Flecha
+                Icon(
+                  Icons.arrow_forward_ios,
+                  size: 16,
+                  color: AppColors.textSecondary,
                 ),
               ],
             ),
@@ -527,25 +437,5 @@ class _ChatHistoryScreenState extends State<ChatHistoryScreen>
         ),
       ),
     );
-  }
-
-  Color _getStatusColor(String status) {
-    switch (status) {
-      case 'pending':
-        return Colors.orange;
-      case 'accepted':
-      case 'en_route':
-        return Colors.blue;
-      case 'on_site':
-        return Colors.purple;
-      case 'charging':
-        return AppColors.primary;
-      case 'completed':
-        return AppColors.success;
-      case 'cancelled':
-        return AppColors.error;
-      default:
-        return AppColors.textSecondary;
-    }
   }
 }

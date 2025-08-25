@@ -98,7 +98,7 @@ class AuthService {
       return null;
     }
 
-    final url = Uri.parse('${Constants.baseUrl}/profile');
+    final url = Uri.parse('${Constants.baseUrl}/user/profile');
     try {
       final response = await http.get(
         url,

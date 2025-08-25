@@ -1,4 +1,4 @@
-// ✅ PANTALLA PRINCIPAL DE CHAT
+// ✅ PANTALLA PRINCIPAL DE CHAT - CORREGIDA
 // Archivo: lib/ui/chat/ServiceChatScreen.dart
 
 import 'package:Voltgo_User/data/models/User/ServiceRequestModel.dart';
@@ -33,6 +33,7 @@ class _ServiceChatScreenState extends State<ServiceChatScreen>
   bool _isSending = false;
   String? _error;
   String _otherParticipantName = '';
+  int _currentUserId = 0;
 
   // Animaciones
   late AnimationController _slideController;
@@ -67,10 +68,15 @@ class _ServiceChatScreenState extends State<ServiceChatScreen>
     });
 
     try {
-      // Determinar el nombre del otro participante
-      _otherParticipantName = widget.userType == 'user'
-          ? (widget.serviceRequest.technician?.name ?? 'Técnico')
-          : (widget.serviceRequest.user?.name ?? 'Cliente');
+      // Determinar el nombre del otro participante y mi ID
+      if (widget.userType == 'user') {
+        _otherParticipantName =
+            widget.serviceRequest.technician?.name ?? 'Técnico';
+        _currentUserId = widget.serviceRequest.userId;
+      } else {
+        _otherParticipantName = widget.serviceRequest.user?.name ?? 'Cliente';
+        _currentUserId = widget.serviceRequest.technicianId ?? 0;
+      }
 
       // Cargar historial de mensajes
       final messages =
@@ -81,9 +87,6 @@ class _ServiceChatScreenState extends State<ServiceChatScreen>
         _messages.addAll(messages);
         _isLoading = false;
       });
-
-      // Marcar mensajes como leídos
-      await ChatService.markAsRead(widget.serviceRequest.id);
 
       // Animar entrada y hacer scroll al final
       _slideController.forward();
@@ -232,12 +235,11 @@ class _ServiceChatScreenState extends State<ServiceChatScreen>
         onPressed: () => Navigator.pop(context),
       ),
       actions: [
-        if (widget.serviceRequest.canChat())
-          IconButton(
-            icon: Icon(Icons.refresh, color: Colors.white),
-            onPressed: _refreshMessages,
-            tooltip: 'Actualizar mensajes',
-          ),
+        IconButton(
+          icon: Icon(Icons.refresh, color: Colors.white),
+          onPressed: _refreshMessages,
+          tooltip: 'Actualizar mensajes',
+        ),
       ],
     );
   }
@@ -278,14 +280,6 @@ class _ServiceChatScreenState extends State<ServiceChatScreen>
                     fontSize: 14,
                   ),
                 ),
-                if (!widget.serviceRequest.canChat())
-                  Text(
-                    'Chat no disponible en este estado',
-                    style: GoogleFonts.inter(
-                      fontSize: 12,
-                      color: AppColors.textSecondary,
-                    ),
-                  ),
               ],
             ),
           ),
@@ -403,8 +397,8 @@ class _ServiceChatScreenState extends State<ServiceChatScreen>
         itemCount: _messages.length,
         itemBuilder: (context, index) {
           final message = _messages[index];
-          final showAvatar = index == 0 ||
-              _messages[index - 1].senderType != message.senderType;
+          final showAvatar =
+              index == 0 || _messages[index - 1].senderId != message.senderId;
 
           return _buildMessageBubble(message, showAvatar);
         },
@@ -458,7 +452,7 @@ class _ServiceChatScreenState extends State<ServiceChatScreen>
   }
 
   Widget _buildMessageBubble(ChatMessage message, bool showAvatar) {
-    final isMyMessage = message.senderType == widget.userType;
+    final isMyMessage = message.senderId == _currentUserId;
 
     return Container(
       margin: const EdgeInsets.only(bottom: 12),
@@ -478,7 +472,9 @@ class _ServiceChatScreenState extends State<ServiceChatScreen>
               ),
               child: Center(
                 child: Text(
-                  message.senderType == 'technician' ? 'T' : 'C',
+                  (message.sender?.name.isNotEmpty == true)
+                      ? message.sender!.name[0].toUpperCase()
+                      : 'U',
                   style: GoogleFonts.inter(
                     color: AppColors.primary,
                     fontWeight: FontWeight.bold,
@@ -531,7 +527,7 @@ class _ServiceChatScreenState extends State<ServiceChatScreen>
                     mainAxisSize: MainAxisSize.min,
                     children: [
                       Text(
-                        message.getTimeAgo(),
+                        message.formattedTime,
                         style: GoogleFonts.inter(
                           color: isMyMessage
                               ? Colors.white.withOpacity(0.7)
@@ -539,16 +535,6 @@ class _ServiceChatScreenState extends State<ServiceChatScreen>
                           fontSize: 10,
                         ),
                       ),
-                      if (isMyMessage) ...[
-                        const SizedBox(width: 4),
-                        Icon(
-                          message.isRead ? Icons.done_all : Icons.done,
-                          size: 12,
-                          color: message.isRead
-                              ? Colors.blue.shade200
-                              : Colors.white.withOpacity(0.7),
-                        ),
-                      ],
                     ],
                   ),
                 ],
@@ -561,7 +547,7 @@ class _ServiceChatScreenState extends State<ServiceChatScreen>
   }
 
   Widget _buildMessageInput() {
-    final canSendMessages = widget.serviceRequest.canChat() && !_isSending;
+    final canSendMessages = !_isSending;
 
     return Container(
       padding: const EdgeInsets.all(16),
@@ -591,9 +577,8 @@ class _ServiceChatScreenState extends State<ServiceChatScreen>
                 onSubmitted: canSendMessages ? (_) => _sendMessage() : null,
                 style: GoogleFonts.inter(fontSize: 14),
                 decoration: InputDecoration(
-                  hintText: canSendMessages
-                      ? 'Escribe un mensaje...'
-                      : 'Chat no disponible',
+                  hintText:
+                      canSendMessages ? 'Escribe un mensaje...' : 'Enviando...',
                   hintStyle: GoogleFonts.inter(
                     color: AppColors.textSecondary,
                     fontSize: 14,

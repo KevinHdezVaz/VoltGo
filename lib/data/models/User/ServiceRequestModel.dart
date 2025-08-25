@@ -114,63 +114,43 @@ class TechnicianData {
   }
 }
 
-// ✅ CLASE ACTUALIZADA
+// En TechnicianProfile.dart
+
 class TechnicianProfile {
   final int userId;
-  final String status;
-  final double? currentLat;
-  final double? currentLng;
-  final double? averageRating; // Corregido de 'rating'
-  final VehicleDetails?
-      vehicleDetails; // Corregido de 'vehicleInfo' y ahora es un objeto
-  final List<String>? availableConnectors; // Corregido de 'connectorTypes'
+  final String? status;
+  final String? currentLat;
+  final String? currentLng;
+  final String? averageRating;
+  final Map<String, dynamic>?
+      vehicleDetails; // ✅ CAMBIAR DE String? a Map<String, dynamic>?
+  final String? availableConnectors;
+  final String? licenseNumber;
 
   TechnicianProfile({
     required this.userId,
-    required this.status,
+    this.status,
     this.currentLat,
     this.currentLng,
     this.averageRating,
     this.vehicleDetails,
     this.availableConnectors,
+    this.licenseNumber,
   });
 
   factory TechnicianProfile.fromJson(Map<String, dynamic> json) {
-    // Lógica para decodificar vehicle_details si es un string
-    VehicleDetails? vehicleData;
-    if (json['vehicle_details'] is String) {
-      try {
-        // Intenta decodificar el string a un mapa
-        var decodedJson = jsonDecode(json['vehicle_details']);
-        // Si el resultado sigue siendo un string (doble codificación), decodifica de nuevo
-        if (decodedJson is String) {
-          decodedJson = jsonDecode(decodedJson);
-        }
-        vehicleData = VehicleDetails.fromJson(decodedJson);
-      } catch (e) {
-        print("Error decodificando vehicle_details: $e");
-        vehicleData = null;
-      }
-    } else if (json['vehicle_details'] is Map<String, dynamic>) {
-      vehicleData = VehicleDetails.fromJson(json['vehicle_details']);
-    }
-
     return TechnicianProfile(
       userId: json['user_id'] ?? 0,
-      status: json['status'] ?? 'offline',
-      currentLat: json['current_lat'] != null
-          ? double.tryParse(json['current_lat'].toString())
+      status: json['status']?.toString(),
+      currentLat: json['current_lat']?.toString(),
+      currentLng: json['current_lng']?.toString(),
+      averageRating: json['average_rating']?.toString(),
+      // ✅ MANEJAR vehicle_details como Map en lugar de String
+      vehicleDetails: json['vehicle_details'] is Map<String, dynamic>
+          ? json['vehicle_details']
           : null,
-      currentLng: json['current_lng'] != null
-          ? double.tryParse(json['current_lng'].toString())
-          : null,
-      averageRating: json['average_rating'] != null // Corregido
-          ? double.tryParse(json['average_rating'].toString())
-          : 5.0,
-      vehicleDetails: vehicleData, // Asigna el objeto decodificado
-      availableConnectors: json['available_connectors'] != null // Corregido
-          ? List<String>.from(json['available_connectors'])
-          : null,
+      availableConnectors: json['available_connectors']?.toString(),
+      licenseNumber: json['license_number']?.toString(),
     );
   }
 
@@ -181,9 +161,35 @@ class TechnicianProfile {
       'current_lat': currentLat,
       'current_lng': currentLng,
       'average_rating': averageRating,
-      'vehicle_details': vehicleDetails?.toJson(),
+      'vehicle_details': vehicleDetails, // ✅ Ya es Map, no necesita conversión
       'available_connectors': availableConnectors,
+      'license_number': licenseNumber,
     };
+  }
+
+  // ✅ MÉTODOS HELPER PARA ACCEDER A LOS DETALLES DEL VEHÍCULO
+  String? get vehicleMake => vehicleDetails?['make']?.toString();
+  String? get vehicleModel => vehicleDetails?['model']?.toString();
+  String? get vehicleYear => vehicleDetails?['year']?.toString();
+  String? get vehiclePlate => vehicleDetails?['plate']?.toString();
+  String? get vehicleColor => vehicleDetails?['color']?.toString();
+  String? get vehicleConnectorType =>
+      vehicleDetails?['connector_type']?.toString();
+
+  // ✅ MÉTODO PARA OBTENER UNA DESCRIPCIÓN COMPLETA DEL VEHÍCULO
+  String get vehicleDescription {
+    if (vehicleDetails == null || vehicleDetails!.isEmpty) {
+      return 'Vehículo no especificado';
+    }
+
+    final parts = <String>[];
+
+    if (vehicleYear != null) parts.add(vehicleYear!);
+    if (vehicleMake != null) parts.add(vehicleMake!);
+    if (vehicleModel != null) parts.add(vehicleModel!);
+    if (vehicleColor != null) parts.add('(${vehicleColor!})');
+
+    return parts.isNotEmpty ? parts.join(' ') : 'Vehículo no especificado';
   }
 }
 

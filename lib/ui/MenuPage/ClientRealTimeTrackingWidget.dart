@@ -1,6 +1,7 @@
 import 'dart:async';
 import 'dart:math' as math;
 import 'package:Voltgo_User/data/models/User/ServiceRequestModel.dart';
+import 'package:Voltgo_User/data/services/ServiceChatScreen.dart';
 import 'package:Voltgo_User/data/services/ServiceRequestService.dart';
 import 'package:Voltgo_User/ui/color/app_colors.dart';
 import 'package:flutter/material.dart';
@@ -32,6 +33,7 @@ class _RealTimeTrackingScreenState extends State<RealTimeTrackingScreen>
   GoogleMapController? _mapController;
   Timer? _trackingTimer;
   Timer? _statusTimer;
+  ServiceRequestModel? _activeServiceRequest;
 
   // Ubicaciones
   LatLng? _technicianLocation;
@@ -62,8 +64,10 @@ class _RealTimeTrackingScreenState extends State<RealTimeTrackingScreen>
   @override
   void initState() {
     super.initState();
-    _currentRequest =
-        widget.serviceRequest; // ✅ CORREGIDO: inicialización correcta
+
+    // ✅ CORREGIDO: Inicializar _currentRequest con los datos del widget
+    _currentRequest = widget.serviceRequest;
+    _activeServiceRequest = widget.serviceRequest;
     _initializeData();
     _initializeAnimations();
     _startTracking();
@@ -79,13 +83,38 @@ class _RealTimeTrackingScreenState extends State<RealTimeTrackingScreen>
     final technician = _currentRequest.technician;
     _technicianName = technician?.name ?? 'Técnico';
     // _technicianPhone = technician?.phone ?? '';
-    _technicianRating =
-        technician?.profile?.averageRating?.toStringAsFixed(1) ?? '5.0';
 
-    final vehicle = technician?.profile?.vehicleDetails;
-    _vehicleInfo = vehicle != null
-        ? '${vehicle.make ?? ''} ${vehicle.model ?? ''} (${vehicle.plate ?? ''})'
-        : 'Vehículo de servicio';
+    // ✅ CORREGIDO: Parsing seguro del rating
+    _technicianRating =
+        double.tryParse(technician?.profile?.averageRating ?? '5.0')
+                ?.toStringAsFixed(1) ??
+            '5.0';
+
+    // ✅ CORREGIDO: Usar el getter vehicleDescription del modelo actualizado
+    _vehicleInfo =
+        technician?.profile?.vehicleDescription ?? 'Vehículo de servicio';
+
+    // ✅ ALTERNATIVA: Si prefieres construir manualmente el string
+    // _vehicleInfo = _buildVehicleInfoFromTechnician(technician);
+  }
+
+// ✅ MÉTODO HELPER ALTERNATIVO para construir info del vehículo
+  String _buildVehicleInfoFromTechnician(dynamic technician) {
+    final profile = technician?.profile;
+    if (profile?.vehicleDetails == null || profile.vehicleDetails.isEmpty) {
+      return 'Vehículo de servicio';
+    }
+
+    final make = profile.vehicleMake ?? '';
+    final model = profile.vehicleModel ?? '';
+    final plate = profile.vehiclePlate ?? '';
+
+    final parts = <String>[];
+    if (make.isNotEmpty) parts.add(make);
+    if (model.isNotEmpty) parts.add(model);
+    if (plate.isNotEmpty) parts.add('($plate)');
+
+    return parts.isNotEmpty ? parts.join(' ') : 'Vehículo de servicio';
   }
 
   void _initializeAnimations() {
@@ -384,7 +413,7 @@ class _RealTimeTrackingScreenState extends State<RealTimeTrackingScreen>
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   Text(
-                    'Seguimiento en tiempo real',
+                    'Seguimiento...',
                     style: GoogleFonts.inter(
                       fontSize: 18,
                       fontWeight: FontWeight.bold,
@@ -700,7 +729,7 @@ class _RealTimeTrackingScreenState extends State<RealTimeTrackingScreen>
           // Botón de mensaje
           Expanded(
             child: OutlinedButton.icon(
-              onPressed: _sendMessage,
+              onPressed: _openChat,
               icon: Icon(Icons.message, size: 18),
               label: Text('Mensaje'),
               style: OutlinedButton.styleFrom(
@@ -736,6 +765,42 @@ class _RealTimeTrackingScreenState extends State<RealTimeTrackingScreen>
               ),
             ),
         ],
+      ),
+    );
+  }
+
+  void _refreshServiceData() async {
+    try {
+      // ✅ CORREGIDO: Usar widget.serviceRequest que SÍ tiene datos
+      final updatedRequest = await ServiceRequestService.getRequestStatus(
+          widget.serviceRequest.id);
+      setState(() {
+        // Actualizar las variables internas si las necesitas
+        _currentRequest = updatedRequest;
+        _activeServiceRequest = updatedRequest;
+      });
+    } catch (e) {
+      print('Error refreshing service data: $e');
+    }
+  }
+
+  void _openChat() async {
+    // ✅ CORREGIDO: Usar widget.serviceRequest en lugar de _currentRequest
+    // widget.serviceRequest SIEMPRE tiene datos porque se pasa desde la pantalla anterior
+
+    HapticFeedback.lightImpact();
+
+    print('🔍 Abriendo chat para servicio: ${widget.serviceRequest.id}');
+    print('📱 Usuario: ${widget.serviceRequest.user?.name ?? 'Desconocido'}');
+
+    // Navegar a la pantalla de chat
+    Navigator.push(
+      context,
+      MaterialPageRoute(
+        builder: (context) => ServiceChatScreen(
+          serviceRequest: widget.serviceRequest, // ✅ USAR widget.serviceRequest
+          userType: 'technician',
+        ),
       ),
     );
   }
